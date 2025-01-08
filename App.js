@@ -12,6 +12,7 @@ import ProfileScreen from './Profile';
 import ReservedScreen from './Reserved';
 import Tabs from './TabBottom'
 import BookingScreen from './BookingPage.js'
+import ReviewScreen from './RestaurantReviews.js';
 
 const Stack = createStackNavigator();
 
@@ -35,6 +36,7 @@ export default function App() {
             <Stack.Screen name="Reserved" component={ReservedScreen} />
             <Stack.Screen name="Tabs" component={Tabs} />
             <Stack.Screen name="Booking" component={BookingScreen} />
+            <Stack.Screen name="Review" component={ReviewScreen} />
           </Stack.Navigator>
         </View>
       </LinearGradient>

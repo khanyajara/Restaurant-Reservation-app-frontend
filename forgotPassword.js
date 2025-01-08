@@ -4,15 +4,32 @@ import { View, TextInput, Button, Text, StyleSheet, Alert, Image } from 'react-n
 const PasswordScreen = ({ navigation }) => {
   const [email, setEmail] = useState(''); 
 
-  const handleResetPassword = () => {
+  const handleResetPassword = async () => {
     if (email === '') {
       Alert.alert('Error', 'Please enter your email address.');
-    } else {
-      
-     
-      Alert.alert('Password Reset', 'A password reset link has been sent to your email.');
-      
-      navigation.navigate('Login'); 
+      return;
+    }
+
+    try {
+      const response = await fetch('https://resturantappbackend.onrender.com/forgot-password', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({ email }),
+      });
+
+      const result = await response.json();
+
+      if (response.ok) {
+        Alert.alert('Password Reset', 'A password reset link has been sent to your email.');
+        navigation.navigate('Login');
+      } else {
+        Alert.alert('Error', result.message || 'Failed to send reset link');
+      }
+    } catch (error) {
+      Alert.alert('Error', 'An error occurred while resetting your password.');
+      console.error(error);
     }
   };
 
@@ -73,7 +90,7 @@ const styles = StyleSheet.create({
     marginBottom: 10,
     paddingHorizontal: 8,
     color: 'white',
-    borderRadius:10
+    borderRadius: 10,
   },
   button: {
     width: 280,

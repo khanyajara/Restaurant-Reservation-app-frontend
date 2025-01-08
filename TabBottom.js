@@ -7,6 +7,7 @@ import HomeScreen from './HomePage';
 import ProfileScreen from './Profile';
 import Reserved from './Reserved';
 import BookingScreen from './BookingPage';
+import ReviewScreen from './RestaurantReviews';
 
 const Tab = createBottomTabNavigator();
 
@@ -40,6 +41,7 @@ export default function AppNavigator() {
         <Tab.Screen name="Profile" component={ProfileScreen} />
         <Tab.Screen name="Reserved" component={Reserved} />
         <Tab.Screen name="Booking" component={BookingScreen} />
+        
 
       </Tab.Navigator>
    

@@ -1,6 +1,4 @@
-
-
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import {
   View,
   Text,
@@ -13,102 +11,54 @@ import {
   Animated,
   Dimensions,
   Modal,
-  ActivityIndicator, 
+  ActivityIndicator,
 } from 'react-native';
 import { LinearGradient } from 'expo-linear-gradient';
 import Icon from 'react-native-vector-icons/FontAwesome';
-
+import axios from 'axios';
 
 const { height: screenHeight } = Dimensions.get('window');
 
-const restaurants = [
-  {
-    id: '1',
-    name: 'Roco Mamas',
-    image: require('./assets/images.jpg'),
-    address: 'Memorial Road Shop 53, North Cape Mall',
-    rating: 4.5,
-    mealType: 'Dinner',
-    reservations: [
-      { time: '7:00 PM', availableTables: 5 },
-      { time: '8:00 PM', availableTables: 2 },
-      { time: '9:00 PM', availableTables: 3 },
-    ],
-    distance: 1.2, 
-  },
-  {
-    id: '2',
-    name: 'KFC',
-    image: require('./assets/kfc-logo.jpg'),
-    address: 'KFC Groeshwe Memorial, North Cape',
-    rating: 4.3,
-    mealType: 'Dinner',
-    reservations: [
-      { time: '6:30 PM', availableTables: 4 },
-      { time: '8:00 PM', availableTables: 1 },
-      { time: '9:30 PM', availableTables: 6 },
-    ],
-    distance: 5.0,
-  },
-  {
-    id: '3',
-    name: 'Aarti\'s Indian Cuisine',
-    image: require('./assets/try-our-sunday-buffet.jpg'),
-    address: '123 Main Street, Kimberley CBD',
-    rating: 4.7,
-    mealType: 'Lunch',
-    reservations: [
-      { time: '7:30 PM', availableTables: 3 },
-      { time: '8:30 PM', availableTables: 5 },
-      { time: '9:30 PM', availableTables: 2 },
-    ],
-    distance: 2.0,
-  },
-  {
-    id: '4',
-    name: 'Flamingo Casino Conference Centre',
-    image: require('./assets/photo1jpg.jpg'),
-    address: '456 Casino Road, Kimberley',
-    rating: 4.6,
-    mealType: 'Dinner',
-    reservations: [
-      { time: '6:00 PM', availableTables: 2 },
-      { time: '7:00 PM', availableTables: 4 },
-      { time: '9:00 PM', availableTables: 3 },
-    ],
-    distance: 3.5,
-  },
-  {
-    id: '5',
-    name: 'McDonald\'s Kimberley CBD',
-    image: require('./assets/lifestyle.jpg'),
-    address: '789 CBD Street, Kimberley',
-    rating: 4.2,
-    mealType: 'Lunch',
-    reservations: [
-      { time: '12:00 PM', availableTables: 6 },
-      { time: '2:00 PM', availableTables: 3 },
-      { time: '4:00 PM', availableTables: 5 },
-    ],
-    distance: 1.0,
-  },
-  {
-    id: '6',
-    name: 'Nando\'s',
-    image: require('./assets/nando-s-logo.jpg'),
-    address: '101 Flame Street, Kimberley',
-    rating: 4.4,
-    mealType: 'Dinner',
-    reservations: [
-      { time: '7:00 PM', availableTables: 3 },
-      { time: '8:30 PM', availableTables: 2 },
-      { time: '9:30 PM', availableTables: 4 },
-    ],
-    distance: 4.0,
-  },
-];
+export default function HomeScreen({ navigation }) {
+  const [restaurants, setRestaurants] = useState([]);
+  const [detailsVisible, setDetailsVisible] = useState(false);
+  const [selectedRestaurant, setSelectedRestaurant] = useState(null);
+  const [viewingReservations, setViewingReservations] = useState(false);
+  const [selectedReservation, setSelectedReservation] = useState(null);
+  const [selectedMealType, setSelectedMealType] = useState('');
+  const [selectedTime, setSelectedTime] = useState('');
+  const [maxDistance, setMaxDistance] = useState(5);
+  const [isFiltersVisible, setIsFiltersVisible] = useState(false);
+  const [loading, setLoading] = useState(false);
+  const slideAnimation = new Animated.Value(screenHeight);
+  const reservationSlideAnimation = new Animated.Value(screenHeight);
 
-const hotDeals = [
+  useEffect(() => {
+    const fetchRestaurants = async () => {
+      setLoading(true);
+      try {
+        const response = await axios.get('https://resturantappbackend.onrender.com/api/restaurants');
+        setRestaurants(response.data);
+      } catch (error) {
+        console.error('Error fetching restaurants:', error);
+      } finally {
+        setLoading(false);
+      }
+    };
+    fetchRestaurants();
+  }, []);
+
+  const showDetails = (restaurant) => {
+    setSelectedRestaurant(restaurant);
+    setDetailsVisible(true);
+    Animated.timing(slideAnimation, {
+      toValue: screenHeight * 0.2,
+      duration: 300,
+      useNativeDriver: true,
+    }).start();
+  };
+
+  const hotDeals = [
     {
       id: '1',
       name: 'Buy 1 Get 1 Free!',
@@ -172,77 +122,6 @@ const hotDeals = [
   ];
   
 
-
-
-export default function HomeScreen({navigation}) {
-  const [detailsVisible, setDetailsVisible] = useState(false);
-  const [selectedRestaurant, setSelectedRestaurant] = useState(null);
-  const [viewingReservations, setViewingReservations] = useState(false);
-  const [selectedReservation, setSelectedReservation] = useState(null);
-  const [selectedMealType, setSelectedMealType] = useState('');
-  const [selectedTime, setSelectedTime] = useState('');
-  const [maxDistance, setMaxDistance] = useState(5); 
-  const [isFiltersVisible, setIsFiltersVisible] = useState(false);
-  const [loading, setLoading] = useState(false); 
-
-  const slideAnimation = new Animated.Value(screenHeight);
-  const reservationSlideAnimation = new Animated.Value(screenHeight);
-
-  const showDetails = (restaurant) => {
-    setSelectedRestaurant(restaurant);
-    setDetailsVisible(true);
-    Animated.timing(slideAnimation, {
-      toValue: screenHeight * 0.2,
-      duration: 300,
-      useNativeDriver: true,
-    }).start();
-  };
-
-  const bookingTable=()=>{
-    setViewingReservations(true);
-    Animated.timing(reservationSlideAnimation,{
-        toValue:screenHeight*0.2,
-        duration:300,
-        useNativeDriver:true,
-        }).start();
-        
-    }
-
-    const gotoReservation =()=>{
-        // setSelectedReservation(null);
-        // setSelectedMealType("");
-        // setSelectedTime("");
-        // setMaxDistance(5);
-        // setIsFiltersVisible(false);
-        // setViewingReservations(false);
-        // Animated.timing(reservationSlideAnimation,{
-        //     toValue:screenHeight,
-        //     duration:300,
-        //     useNativeDriver:true,
-        //     }).start();
-        navigation.navigate('Booking', {
-          restaurant: {
-            name: '',
-
-           
-            
-          },
-        });
-    }
-  
-
-  const refreshPage = () => {
-    setLoading(true); 
-    setSelectedMealType('');
-    setSelectedTime('');
-    setMaxDistance(5);
-    setIsFiltersVisible(false);
-
-    setTimeout(() => {
-      setLoading(false); 
-    }, 2000); 
-  };
-
   const hideDetails = () => {
     Animated.timing(slideAnimation, {
       toValue: screenHeight,
@@ -255,15 +134,15 @@ export default function HomeScreen({navigation}) {
 
   const toggleReservations = () => {
     if (!viewingReservations) {
-      Animated.timing(slideAnimation, {
-        toValue: -screenHeight,
+      Animated.timing(reservationSlideAnimation, {
+        toValue: screenHeight * 0.2,
         duration: 300,
         useNativeDriver: true,
       }).start(() => {
         setViewingReservations(true);
       });
     } else {
-      Animated.timing(slideAnimation, {
+      Animated.timing(reservationSlideAnimation, {
         toValue: screenHeight,
         duration: 300,
         useNativeDriver: true,
@@ -279,6 +158,18 @@ export default function HomeScreen({navigation}) {
     hideDetails();
   };
 
+  const refreshPage = () => {
+    setLoading(true);
+    setSelectedMealType('');
+    setSelectedTime('');
+    setMaxDistance(5);
+    setIsFiltersVisible(false);
+
+    setTimeout(() => {
+      setLoading(false);
+    }, 2000);
+  };
+
   const filteredRestaurants = restaurants.filter((restaurant) => {
     const matchesMealType = selectedMealType ? restaurant.mealType === selectedMealType : true;
     const matchesTime = selectedTime
@@ -289,10 +180,22 @@ export default function HomeScreen({navigation}) {
     return matchesMealType && matchesTime && matchesDistance;
   });
 
+  const gotoReservation = () => {
+    navigation.navigate('Booking', {
+      restaurant: selectedRestaurant,
+    });
+  };
+
+  const restaurantReviews = () => {
+    navigation.navigate('Review', {
+      restaurant: selectedRestaurant,
+    });
+  };
+
   const renderRestaurant = ({ item }) => (
     <TouchableOpacity onPress={() => showDetails(item)}>
       <View style={styles.card}>
-        <Image source={item.image} style={styles.image} />
+        <Image source={item.imageUrl} style={styles.image} />
         <View style={styles.cardContent}>
           <Text style={styles.restaurantName}>{item.name}</Text>
           <Text style={styles.restaurantDetails}>📍{item.address}</Text>
@@ -301,19 +204,18 @@ export default function HomeScreen({navigation}) {
       </View>
     </TouchableOpacity>
   );
+  
   const renderHotDeals = () => (
     <ScrollView horizontal showsHorizontalScrollIndicator={false} style={styles.hotDealsContainer}>
       {hotDeals.map((deal) => (
         <View key={deal.id} style={styles.hotDealCard}>
-          
           <Text style={styles.hotDealName}>{deal.name}</Text>
           <Text style={styles.hotDealDescription}>{deal.description}</Text>
         </View>
       ))}
     </ScrollView>
   );
-
-
+  
   return (
     <LinearGradient colors={['#1a1a1a', '#000000']} style={styles.gradient}>
       <View style={styles.container}>
@@ -324,7 +226,7 @@ export default function HomeScreen({navigation}) {
             resizeMode="contain"
           />
         </TouchableOpacity>
-
+  
         <View style={styles.header}>
           <TextInput
             placeholder="Search restaurants..."
@@ -332,18 +234,16 @@ export default function HomeScreen({navigation}) {
             style={styles.searchInput}
           />
           <TouchableOpacity onPress={() => setIsFiltersVisible(!isFiltersVisible)} style={styles.ios}>
-          <Icon name="filter" size={35} color="#D74930" />
+            <Icon name="filter" size={35} color="#D74930" />
           </TouchableOpacity>
         </View>
-
+  
         {loading && (
           <View style={styles.loaderContainer}>
             <ActivityIndicator size="large" color="#fff" />
           </View>
         )}
-
-
-
+  
         <Modal visible={isFiltersVisible} animationType="slide" transparent={true}>
           <View style={styles.modalBackground}>
             <View style={styles.filterModal}>
@@ -357,7 +257,7 @@ export default function HomeScreen({navigation}) {
                     <Text style={styles.filterButton}>Lunch</Text>
                   </TouchableOpacity>
                 </View>
-
+  
                 <View style={styles.filterGroup}>
                   <Text>Available Times:</Text>
                   <TouchableOpacity onPress={() => setSelectedTime('7:00 PM')}>
@@ -367,7 +267,7 @@ export default function HomeScreen({navigation}) {
                     <Text style={styles.filterButton}>8:00 PM</Text>
                   </TouchableOpacity>
                 </View>
-
+  
                 <View style={styles.filterGroup}>
                   <Text>Max Distance (km):</Text>
                   <TouchableOpacity onPress={() => setMaxDistance(5)}>
@@ -378,26 +278,24 @@ export default function HomeScreen({navigation}) {
                   </TouchableOpacity>
                 </View>
               </ScrollView>
-
+  
               <TouchableOpacity style={styles.closeButton} onPress={() => setIsFiltersVisible(false)}>
                 <Text style={styles.closeButtonText}>Close Filters</Text>
               </TouchableOpacity>
             </View>
           </View>
         </Modal>
-
-       
-
+  
         <ScrollView>
-        {renderHotDeals()}
-            <FlatList
-              data={filteredRestaurants}
-              renderItem={renderRestaurant}
-              keyExtractor={(item) => item.id}
-              contentContainerStyle={styles.listContainer}
-            />
+          {renderHotDeals()}
+          <FlatList
+            data={filteredRestaurants}
+            renderItem={renderRestaurant}
+            keyExtractor={(item) => item.id}
+            contentContainerStyle={styles.listContainer}
+          />
         </ScrollView>
-
+  
         {detailsVisible && (
           <Animated.View
             style={[
@@ -410,23 +308,39 @@ export default function HomeScreen({navigation}) {
           >
             <ScrollView style={styles.detailsContent}>
               <Text style={styles.detailsTitle}>{selectedRestaurant?.name}</Text>
-              <Image source={selectedRestaurant?.image} style={styles.detailsImage} />
+              <Image source={selectedRestaurant?.imageUrl} style={styles.detailsImage} />
               <Text style={styles.detailsAddress}>📍 {selectedRestaurant?.address}</Text>
               <Text style={styles.detailsRating}>⭐ Rating: {selectedRestaurant?.rating}</Text>
-
+  
               <TouchableOpacity style={styles.reservationButton} onPress={toggleReservations}>
                 <Text style={styles.reservationButtonText}>
                   {viewingReservations ? 'Hide Reservations' : 'View Available Reservations'}
                 </Text>
               </TouchableOpacity>
-
+  
+              <TouchableOpacity style={styles.reservationButton} onPress={restaurantReviews}>
+                <Text>Leave a review</Text>
+              </TouchableOpacity>
+  
+              <Text style={styles.reviewsTitle}>Reviews</Text>
+              {selectedRestaurant?.reviews?.length > 0 ? (
+                selectedRestaurant.reviews.map((review, index) => (
+                  <View key={index} style={styles.reviewCard}>
+                    <Text style={styles.reviewerName}>{review.reviewer}</Text>
+                    <Text style={styles.reviewComment}>{review.comment}</Text>
+                  </View>
+                ))
+              ) : (
+                <Text style={styles.noReviewsText}>No reviews available</Text>
+              )}
+  
               <TouchableOpacity onPress={hideDetails}>
                 <Text style={styles.closeButton}>Close</Text>
               </TouchableOpacity>
             </ScrollView>
           </Animated.View>
         )}
-
+  
         {viewingReservations && (
           <Animated.View
             style={[
@@ -439,10 +353,10 @@ export default function HomeScreen({navigation}) {
           >
             <ScrollView style={styles.detailsContent}>
               <Text style={styles.detailsTitle}>Available Reservations for {selectedRestaurant?.name}</Text>
-
+  
               <View style={styles.reservationsList}>
                 <Text style={styles.reservationTitle}>Available Reservations:</Text>
-                {selectedRestaurant?.reservations.map((reservation, index) => (
+                {selectedRestaurant?.availableSlots.map((reservation, index) => (
                   <View key={index} style={styles.reservationItem}>
                     <Text style={styles.reservationTime}>{reservation.time}</Text>
                     <Text style={styles.availableTables}>
@@ -450,18 +364,19 @@ export default function HomeScreen({navigation}) {
                     </Text>
                     <TouchableOpacity
                       style={styles.bookButton}
-                      // onPress={() => {
-                      //   setSelectedReservation(reservation);
-                      //   bookReservation();
-                      // }}
-                       onPress={gotoReservation}
+                       onPress={() => {
+                         setSelectedReservation(reservation);
+                         bookReservation();
+                         gotoReservation();
+                      }}
+                      
                     >
-                      <Text style={styles.bookButtonText}  >Book Now</Text>
+                      <Text style={styles.bookButtonText}>Book Now</Text>
                     </TouchableOpacity>
                   </View>
                 ))}
               </View>
-
+  
               <TouchableOpacity style={styles.closeButton} onPress={toggleReservations}>
                 <Text style={styles.closeButtonText}>Close Reservations</Text>
               </TouchableOpacity>
@@ -471,7 +386,7 @@ export default function HomeScreen({navigation}) {
       </View>
     </LinearGradient>
   );
-}
+}  
 
 const styles = StyleSheet.create({
   gradient: {
@@ -572,6 +487,34 @@ const styles = StyleSheet.create({
     fontWeight: 'bold',
     color: 'white',
   },
+  reviewsTitle: {
+    fontSize: 18,
+    fontWeight: 'bold',
+    marginVertical: 10,
+    color: 'white',
+  },
+  reviewCard: {
+    backgroundColor: '#444',
+    borderRadius: 8,
+    padding: 10,
+    marginBottom: 10,
+  },
+  reviewerName: {
+    fontSize: 16,
+    fontWeight: 'bold',
+    color: '#FFD700',
+  },
+  reviewComment: {
+    fontSize: 14,
+    color: 'white',
+  },
+  noReviewsText: {
+    fontSize: 14,
+    color: 'white',
+    fontStyle: 'italic',
+    marginTop: 10,
+  },
+  
   restaurantDetails: {
     fontSize: 14,
     color: 'black',

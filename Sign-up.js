@@ -12,7 +12,7 @@ const SignUpScreen = ({ navigation }) => {
     return regex.test(email);
   };
 
-  const handleSignUp = () => {
+  const handleSignUp = async () => {
     if (!fullName || !phoneNumber || !email || !password) {
       Alert.alert('Validation Error', 'Please fill in all fields');
       return;
@@ -25,11 +25,35 @@ const SignUpScreen = ({ navigation }) => {
       Alert.alert('Validation Error', 'Password must be at least 6 characters long');
       return;
     }
-
-    console.log('Signed up with:', { fullName, phoneNumber, email, password });
-    navigation.navigate('Login');
+  
+    try {
+      const response = await fetch('https://resturantappbackend.onrender.com/api/register', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          fullname: fullName,
+          phonenumber: phoneNumber,
+          email,
+          password,
+        }),
+      });
+  
+      const result = await response.json();
+  
+      if (response.ok) {
+        Alert.alert('Success', 'Account created successfully');
+        navigation.navigate('Login');
+      } else {
+        Alert.alert('Error', result.message || 'Something went wrong');
+      }
+    } catch (error) {
+      Alert.alert('Error', 'Failed to connect to the server');
+      console.error(error);
+    }
   };
-
+  
   return (
     <View style={styles.container}>
       <View>

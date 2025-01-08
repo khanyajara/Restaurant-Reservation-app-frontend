@@ -25,6 +25,62 @@ const reservationsData = [
     date: '2025-01-12',
     image: require('./assets/kfc-logo.jpg'),
   },
+  {
+    id: '3',
+    restaurantName: 'Pizza Hut',
+    time: '8:00 PM',
+    date: '2025-01-14',
+    // image: require('./assets/pizza-hut-logo.jpg') ,
+  },
+  {
+    id: '4',
+    restaurantName: 'Burger King',
+    time: '7:30 PM',
+    date: '2025-01-16',
+    // image: require('./assets/burger-king-logo.jpg'),
+  },
+  {
+    id: '5',
+    restaurantName: 'McDonald’s',
+    time: '6:00 PM',
+    date: '2025-01-18',
+    // image: require('./assets/mcdonalds-logo.jpg'),
+  },
+  {
+    id: '6',
+    restaurantName: 'Nando’s',
+    time: '7:15 PM',
+    date: '2025-01-20',
+    // image: require('./assets/nandos-logo.jpg'),
+  },
+  {
+    id: '7',
+    restaurantName: 'Starbucks',
+    time: '5:00 PM',
+    date: '2025-01-22',
+    // image: require('./assets/starbucks-logo.jpg'),
+  },
+  {
+    id: '8',
+    restaurantName: 'Domino’s Pizza',
+    time: '6:45 PM',
+    date: '2025-01-24',
+    // image: require('./assets/dominos-logo.jpg'),
+  },
+  {
+    id: '9',
+    restaurantName: 'Subway',
+    time: '5:30 PM',
+    date: '2025-01-26',
+    // image: require('./assets/subway-logo.jpg'),
+  },
+  {
+    id: '10',
+    restaurantName: 'Ocean Basket',
+    time: '7:45 PM',
+    date: '2025-01-28',
+    // image: require('./assets/ocean-basket-logo.jpg'),
+  },
 ];
 
 export default function Reserved() {
