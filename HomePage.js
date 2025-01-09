@@ -16,6 +16,7 @@ import {
 import { LinearGradient } from 'expo-linear-gradient';
 import Icon from 'react-native-vector-icons/FontAwesome';
 import axios from 'axios';
+// import { format } from 'date-fns';
 
 const { height: screenHeight } = Dimensions.get('window');
 
@@ -37,8 +38,13 @@ export default function HomeScreen({ navigation }) {
     const fetchRestaurants = async () => {
       setLoading(true);
       try {
-        const response = await axios.get('https://resturantappbackend.onrender.com/api/restaurants');
-        setRestaurants(response.data);
+        const response = await axios.get('https://resturantappbackend.onrender.com/api/getR');
+        if (Array.isArray(response.data.restaurants)) {
+          setRestaurants(response.data.restaurants);
+          console.log(response.data)
+        } else {
+          console.error('Invalid data format: ', response.data);
+        }
       } catch (error) {
         console.error('Error fetching restaurants:', error);
       } finally {
@@ -48,6 +54,8 @@ export default function HomeScreen({ navigation }) {
     fetchRestaurants();
   }, []);
 
+
+    
   const showDetails = (restaurant) => {
     setSelectedRestaurant(restaurant);
     setDetailsVisible(true);
@@ -120,7 +128,6 @@ export default function HomeScreen({ navigation }) {
       description: 'Available at Buca Di Beppo',
     },
   ];
-  
 
   const hideDetails = () => {
     Animated.timing(slideAnimation, {
@@ -170,15 +177,25 @@ export default function HomeScreen({ navigation }) {
     }, 2000);
   };
 
-  const filteredRestaurants = restaurants.filter((restaurant) => {
-    const matchesMealType = selectedMealType ? restaurant.mealType === selectedMealType : true;
-    const matchesTime = selectedTime
-      ? restaurant.reservations.some((res) => res.time === selectedTime)
-      : true;
-    const matchesDistance = restaurant.distance <= maxDistance;
+//   const filteredRestaurants = Array.isArray(restaurants)
+//   ? restaurants.filter((restaurant) => {
+//       const matchesMealType = selectedMealType ? restaurant.mealType === selectedMealType : true;
+//       console.log('matchesMealType:', matchesMealType, selectedMealType, restaurant.mealType);
+      
+//       const matchesTime = selectedTime
+//         ? restaurant.reservations && restaurant.reservations.some((res) => res.time === selectedTime)
+//         : true;
+//       console.log('matchesTime:', matchesTime, selectedTime, restaurant.reservations);
+      
+//       const matchesDistance = restaurant.distance <= maxDistance;
+//       console.log('matchesDistance:', matchesDistance, restaurant.distance, maxDistance);
 
-    return matchesMealType && matchesTime && matchesDistance;
-  });
+//       return matchesMealType && matchesTime && matchesDistance;
+//     })
+//   : [];
+
+// console.log('filteredRestaurants:', filteredRestaurants);
+
 
   const gotoReservation = () => {
     navigation.navigate('Booking', {
@@ -195,16 +212,20 @@ export default function HomeScreen({ navigation }) {
   const renderRestaurant = ({ item }) => (
     <TouchableOpacity onPress={() => showDetails(item)}>
       <View style={styles.card}>
-        <Image source={item.imageUrl} style={styles.image} />
+        <Image 
+          source={ {uri: item.imageUrl } }
+          style={styles.image} 
+        />
         <View style={styles.cardContent}>
-          <Text style={styles.restaurantName}>{item.name}</Text>
-          <Text style={styles.restaurantDetails}>📍{item.address}</Text>
-          <Text style={styles.restaurantRating}>⭐ {item.rating}</Text>
+          <Text style={styles.restaurantName}>{item.name || 'Unnamed Restaurant'}</Text>
+          <Text style={styles.restaurantDetails}>📍{item.address || 'No address available'}</Text>
+          <Text style={styles.restaurantRating}>⭐ {item.rating || 'No rating'}</Text>
         </View>
       </View>
     </TouchableOpacity>
   );
   
+
   const renderHotDeals = () => (
     <ScrollView horizontal showsHorizontalScrollIndicator={false} style={styles.hotDealsContainer}>
       {hotDeals.map((deal) => (
@@ -215,7 +236,7 @@ export default function HomeScreen({ navigation }) {
       ))}
     </ScrollView>
   );
-  
+
   return (
     <LinearGradient colors={['#1a1a1a', '#000000']} style={styles.gradient}>
       <View style={styles.container}>
@@ -226,7 +247,7 @@ export default function HomeScreen({ navigation }) {
             resizeMode="contain"
           />
         </TouchableOpacity>
-  
+
         <View style={styles.header}>
           <TextInput
             placeholder="Search restaurants..."
@@ -237,13 +258,13 @@ export default function HomeScreen({ navigation }) {
             <Icon name="filter" size={35} color="#D74930" />
           </TouchableOpacity>
         </View>
-  
+
         {loading && (
           <View style={styles.loaderContainer}>
             <ActivityIndicator size="large" color="#fff" />
           </View>
         )}
-  
+
         <Modal visible={isFiltersVisible} animationType="slide" transparent={true}>
           <View style={styles.modalBackground}>
             <View style={styles.filterModal}>
@@ -257,7 +278,7 @@ export default function HomeScreen({ navigation }) {
                     <Text style={styles.filterButton}>Lunch</Text>
                   </TouchableOpacity>
                 </View>
-  
+
                 <View style={styles.filterGroup}>
                   <Text>Available Times:</Text>
                   <TouchableOpacity onPress={() => setSelectedTime('7:00 PM')}>
@@ -267,7 +288,7 @@ export default function HomeScreen({ navigation }) {
                     <Text style={styles.filterButton}>8:00 PM</Text>
                   </TouchableOpacity>
                 </View>
-  
+
                 <View style={styles.filterGroup}>
                   <Text>Max Distance (km):</Text>
                   <TouchableOpacity onPress={() => setMaxDistance(5)}>
@@ -278,68 +299,94 @@ export default function HomeScreen({ navigation }) {
                   </TouchableOpacity>
                 </View>
               </ScrollView>
-  
+
               <TouchableOpacity style={styles.closeButton} onPress={() => setIsFiltersVisible(false)}>
                 <Text style={styles.closeButtonText}>Close Filters</Text>
               </TouchableOpacity>
             </View>
           </View>
         </Modal>
-  
-        <ScrollView>
-          {renderHotDeals()}
+
+        
+        
           <FlatList
-            data={filteredRestaurants}
+            ListHeaderComponent={renderHotDeals}
+            data={restaurants}
             renderItem={renderRestaurant}
             keyExtractor={(item) => item.id}
             contentContainerStyle={styles.listContainer}
           />
-        </ScrollView>
-  
+        
+
+
         {detailsVisible && (
-          <Animated.View
-            style={[
-              styles.details,
-              {
-                transform: [{ translateY: slideAnimation }],
-                height: screenHeight * 0.8,
-              },
-            ]}
-          >
-            <ScrollView style={styles.detailsContent}>
-              <Text style={styles.detailsTitle}>{selectedRestaurant?.name}</Text>
-              <Image source={selectedRestaurant?.imageUrl} style={styles.detailsImage} />
-              <Text style={styles.detailsAddress}>📍 {selectedRestaurant?.address}</Text>
-              <Text style={styles.detailsRating}>⭐ Rating: {selectedRestaurant?.rating}</Text>
+  <Animated.View
+    style={[
+      styles.details,
+      {
+        transform: [{ translateY: slideAnimation }],
+        height: screenHeight * 0.8,
+      },
+    ]}
+  >
+    <ScrollView style={styles.detailsContent}>
+      {/* Displaying Restaurant Details */}
+      <View style={styles.restaurantContainer}>
+        {/* Display Restaurant Image */}
+        <Image
+          source={{ uri: selectedRestaurant?.imageUrl }} // Using image URL or Base64
+          style={styles.restaurantImage}
+        />
+        
+        {/* Restaurant Name */}
+        <Text style={styles.restaurantName}>{selectedRestaurant?.name}</Text>
+        
+        {/* Restaurant Address */}
+        <Text style={styles.restaurantAddress}>{selectedRestaurant?.address}</Text>
+        
+        {/* Restaurant Rating */}
+        <Text style={styles.restaurantRating}>Rating: {selectedRestaurant?.rating} ⭐</Text>
+        
+        {/* Available Slots */}
+        <View style={styles.availableSlotsContainer}>
+          {selectedRestaurant?.availableSlots?.map((slot, index) => (
+            <Text key={index} style={styles.slotText}>
+              {slot.startTime} - {slot.endTime} - {slot.isAvailable ? "Available" : "Not Available"}
+            </Text>
+          ))}
+        </View>
+      </View>
+
+      {/* Toggle Reservations and Reviews */}
+      <TouchableOpacity style={styles.reservationButton} onPress={toggleReservations}>
+        <Text style={styles.reservationButtonText}>
+          {viewingReservations ? 'Hide Reservations' : 'View Available Reservations'}
+        </Text>
+      </TouchableOpacity>
   
-              <TouchableOpacity style={styles.reservationButton} onPress={toggleReservations}>
-                <Text style={styles.reservationButtonText}>
-                  {viewingReservations ? 'Hide Reservations' : 'View Available Reservations'}
-                </Text>
-              </TouchableOpacity>
+      <TouchableOpacity style={styles.reservationButton} onPress={restaurantReviews}>
+        <Text>Leave a review</Text>
+      </TouchableOpacity>
   
-              <TouchableOpacity style={styles.reservationButton} onPress={restaurantReviews}>
-                <Text>Leave a review</Text>
-              </TouchableOpacity>
+      <Text style={styles.reviewsTitle}>Reviews</Text>
+      {selectedRestaurant?.reviews?.length > 0 ? (
+        selectedRestaurant.reviews.map((review, index) => (
+          <View key={index} style={styles.reviewCard}>
+            <Text style={styles.reviewerName}>{review.reviewer}</Text>
+            <Text style={styles.reviewComment}>{review.comment}</Text>
+          </View>
+        ))
+      ) : (
+        <Text style={styles.noReviewsText}>No reviews available</Text>
+      )}
   
-              <Text style={styles.reviewsTitle}>Reviews</Text>
-              {selectedRestaurant?.reviews?.length > 0 ? (
-                selectedRestaurant.reviews.map((review, index) => (
-                  <View key={index} style={styles.reviewCard}>
-                    <Text style={styles.reviewerName}>{review.reviewer}</Text>
-                    <Text style={styles.reviewComment}>{review.comment}</Text>
-                  </View>
-                ))
-              ) : (
-                <Text style={styles.noReviewsText}>No reviews available</Text>
-              )}
-  
-              <TouchableOpacity onPress={hideDetails}>
-                <Text style={styles.closeButton}>Close</Text>
-              </TouchableOpacity>
-            </ScrollView>
-          </Animated.View>
-        )}
+      <TouchableOpacity onPress={hideDetails}>
+        <Text style={styles.closeButton}>Close</Text>
+      </TouchableOpacity>
+    </ScrollView>
+  </Animated.View>
+)}
+
   
         {viewingReservations && (
           <Animated.View
@@ -358,18 +405,17 @@ export default function HomeScreen({ navigation }) {
                 <Text style={styles.reservationTitle}>Available Reservations:</Text>
                 {selectedRestaurant?.availableSlots.map((reservation, index) => (
                   <View key={index} style={styles.reservationItem}>
-                    <Text style={styles.reservationTime}>{reservation.time}</Text>
+                    <Text style={styles.reservationTime}>{reservation.startTime} - {reservation.endTime}</Text>
                     <Text style={styles.availableTables}>
-                      {reservation.availableTables} Tables Available
+                      {reservation.isAvailable ? 'Available' : 'Not Available'}
                     </Text>
                     <TouchableOpacity
                       style={styles.bookButton}
-                       onPress={() => {
-                         setSelectedReservation(reservation);
-                         bookReservation();
-                         gotoReservation();
+                      onPress={() => {
+                        setSelectedReservation(reservation);
+                        bookReservation();
+                        gotoReservation();
                       }}
-                      
                     >
                       <Text style={styles.bookButtonText}>Book Now</Text>
                     </TouchableOpacity>
@@ -645,4 +691,5 @@ const styles = StyleSheet.create({
     color: '#fff',
     fontSize: 16,
   },
-});
+}); 
+
