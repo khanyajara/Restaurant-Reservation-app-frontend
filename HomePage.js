@@ -177,24 +177,21 @@ export default function HomeScreen({ navigation }) {
     }, 2000);
   };
 
-//   const filteredRestaurants = Array.isArray(restaurants)
-//   ? restaurants.filter((restaurant) => {
-//       const matchesMealType = selectedMealType ? restaurant.mealType === selectedMealType : true;
-//       console.log('matchesMealType:', matchesMealType, selectedMealType, restaurant.mealType);
+  const filteredRestaurants = Array.isArray(restaurants)
+  ? restaurants.filter((restaurant) => {
+      const matchesMealType = selectedMealType ? restaurant.mealType === selectedMealType : true;
       
-//       const matchesTime = selectedTime
-//         ? restaurant.reservations && restaurant.reservations.some((res) => res.time === selectedTime)
-//         : true;
-//       console.log('matchesTime:', matchesTime, selectedTime, restaurant.reservations);
-      
-//       const matchesDistance = restaurant.distance <= maxDistance;
-//       console.log('matchesDistance:', matchesDistance, restaurant.distance, maxDistance);
+      // Check for valid restaurant reservations and time slots before matching
+      const matchesTime = selectedTime
+        ? restaurant.reservations && restaurant.reservations.some((res) => res.time === selectedTime && res)
+        : true;
 
-//       return matchesMealType && matchesTime && matchesDistance;
-//     })
-//   : [];
+      const matchesDistance = restaurant.distance <= maxDistance;
 
-// console.log('filteredRestaurants:', filteredRestaurants);
+      return matchesMealType && matchesTime && matchesDistance;
+    })
+  : [];
+
 
 
   const gotoReservation = () => {
@@ -211,17 +208,21 @@ export default function HomeScreen({ navigation }) {
 
   const renderRestaurant = ({ item }) => (
     <TouchableOpacity onPress={() => showDetails(item)}>
-      <View style={styles.card}>
-        <Image 
-          source={ {uri: item.imageUrl } }
-          style={styles.image} 
-        />
-        <View style={styles.cardContent}>
-          <Text style={styles.restaurantName}>{item.name || 'Unnamed Restaurant'}</Text>
-          <Text style={styles.restaurantDetails}>📍{item.address || 'No address available'}</Text>
-          <Text style={styles.restaurantRating}>⭐ {item.rating || 'No rating'}</Text>
+      <ScrollView
+      
+      >
+        <View style={styles.card}>
+          <Image
+            source={ {uri: item.imageUrl } }
+            style={styles.image}
+          />
+          <View style={styles.cardContent}>
+            <Text style={styles.restaurantName}>{item.name || 'Unnamed Restaurant'}</Text>
+            <Text style={styles.restaurantDetails}>📍{item.address || 'No address available'}</Text>
+            <Text style={styles.restaurantRating}>⭐ {item.rating || 'No rating'}</Text>
+          </View>
         </View>
-      </View>
+      </ScrollView>
     </TouchableOpacity>
   );
   
@@ -307,11 +308,13 @@ export default function HomeScreen({ navigation }) {
           </View>
         </Modal>
 
-        
+        <FlatList
+            ListHeaderComponent={renderHotDeals}/>
         
           <FlatList
-            ListHeaderComponent={renderHotDeals}
+            
             data={restaurants}
+            horizontal={true}
             renderItem={renderRestaurant}
             keyExtractor={(item) => item.id}
             contentContainerStyle={styles.listContainer}
@@ -349,12 +352,15 @@ export default function HomeScreen({ navigation }) {
         
         {/* Available Slots */}
         <View style={styles.availableSlotsContainer}>
-          {selectedRestaurant?.availableSlots?.map((slot, index) => (
-            <Text key={index} style={styles.slotText}>
-              {slot.startTime} - {slot.endTime} - {slot.isAvailable ? "Available" : "Not Available"}
-            </Text>
-          ))}
-        </View>
+  {selectedRestaurant?.availableSlots?.map((slot, index) => (
+    slot && slot.startTime && slot.endTime ? (
+      <Text key={index} style={styles.slotText}>
+        {slot.startTime} - {slot.endTime} - {slot.isAvailable ? "Available" : "Not Available"}
+      </Text>
+    ) : null
+  ))}
+</View>
+
       </View>
 
       {/* Toggle Reservations and Reviews */}
@@ -510,6 +516,10 @@ const styles = StyleSheet.create({
   },
   listContainer: {
     paddingBottom: 20,
+    gap:15,
+    display:"flex",
+    flexWrap:"wrap",
+    
   },
   card: {
     backgroundColor: '#88878a',
@@ -517,6 +527,8 @@ const styles = StyleSheet.create({
     marginTop: 19,
     overflow: 'hidden',
     flexDirection: 'column',
+    width:290,
+    height:"auto"
   },
   image: {
     width: 340,

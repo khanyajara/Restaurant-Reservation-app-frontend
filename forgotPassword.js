@@ -1,20 +1,21 @@
 import React, { useState } from 'react';
-import { View, TextInput, Button, Text, StyleSheet, Alert, Image } from 'react-native';
+import { View, TextInput, TouchableOpacity, Text, StyleSheet, Alert, Image } from 'react-native';
 
 const PasswordScreen = ({ navigation }) => {
-  const [email, setEmail] = useState(''); 
+  const [email, setEmail] = useState('');
 
   const handleResetPassword = async () => {
-    if (email === '') {
+    if (!email.trim()) {
       Alert.alert('Error', 'Please enter your email address.');
       return;
     }
 
     try {
-      const response = await fetch('https://resturantappbackend.onrender.com/forgot-password', {
+      const response = await fetch('https://resturantappbackend.onrender.com/api/forgot-password', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
+          
         },
         body: JSON.stringify({ email }),
       });
@@ -25,7 +26,7 @@ const PasswordScreen = ({ navigation }) => {
         Alert.alert('Password Reset', 'A password reset link has been sent to your email.');
         navigation.navigate('Login');
       } else {
-        Alert.alert('Error', result.message || 'Failed to send reset link');
+        Alert.alert('Error', result.message || 'Failed to send reset link.');
       }
     } catch (error) {
       Alert.alert('Error', 'An error occurred while resetting your password.');
@@ -35,14 +36,11 @@ const PasswordScreen = ({ navigation }) => {
 
   return (
     <View style={styles.container}>
-      <View>
-        <Image
-          source={require('./assets/Feast-Finder-removebg-preview.png')}
-          style={{ width: 200, height: 200 }}
-          resizeMode="contain"
-        />
-      </View>
-
+      <Image
+        source={require('./assets/Feast-Finder-removebg-preview.png')}
+        style={styles.logo}
+        resizeMode="contain"
+      />
       <Text style={styles.headerText}>Forgot Password</Text>
 
       <TextInput
@@ -51,18 +49,17 @@ const PasswordScreen = ({ navigation }) => {
         placeholderTextColor="#a8a8a8"
         value={email}
         onChangeText={setEmail}
+        keyboardType="email-address"
+        autoCapitalize="none"
       />
 
-      <Button
-        title="Reset Password"
-        style={styles.button}
-        onPress={handleResetPassword}
-        color="#D74930"
-      />
+      <TouchableOpacity style={styles.button} onPress={handleResetPassword}>
+        <Text style={styles.buttonText}>Reset Password</Text>
+      </TouchableOpacity>
 
-      <Text style={styles.link} onPress={() => navigation.navigate('Login')}>
-        Back to Login
-      </Text>
+      <TouchableOpacity onPress={() => navigation.navigate('Login')}>
+        <Text style={styles.link}>Back to Login</Text>
+      </TouchableOpacity>
     </View>
   );
 };
@@ -74,6 +71,10 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     padding: 16,
     backgroundColor: 'black',
+  },
+  logo: {
+    width: 200,
+    height: 200,
   },
   headerText: {
     fontSize: 24,
@@ -94,6 +95,17 @@ const styles = StyleSheet.create({
   },
   button: {
     width: 280,
+    height: 50,
+    backgroundColor: '#D74930',
+    justifyContent: 'center',
+    alignItems: 'center',
+    borderRadius: 10,
+    marginTop: 10,
+  },
+  buttonText: {
+    color: 'white',
+    fontSize: 16,
+    fontWeight: 'bold',
   },
   link: {
     color: '#D74930',

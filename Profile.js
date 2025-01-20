@@ -1,84 +1,119 @@
-import React, { useState } from 'react';
-import { StyleSheet, Text, View, TextInput, Switch,Image, TouchableOpacity, ScrollView } from 'react-native';
+import React, { useEffect, useState } from 'react';
+import { StyleSheet, Text, View, TextInput, Switch, Image, TouchableOpacity, ScrollView, Alert } from 'react-native';
+import AsyncStorage from '@react-native-async-storage/async-storage';
+import axios from 'axios';
 
 export default function ReservationProfile({ navigation }) {
+  const [user, setUser] = useState(null);
   const [name, setName] = useState('');
   const [email, setEmail] = useState('');
   const [phoneNumber, setPhoneNumber] = useState('');
-  const [location, setLocation] = useState('');
-  const [useCurrentLocation, setUseCurrentLocation] = useState(false);
-  const [preferredDate, setPreferredDate] = useState('');
   const [notifications, setNotifications] = useState(false);
-  const [cityReservation, setCityReservation] = useState('');
 
-  const handleSave = () => {
-    alert('Reservation profile updated successfully!');
+  useEffect(() => {
+    const fetchUser = async () => {
+      try {
+        const token = await AsyncStorage.getItem('@authToken');
+        if (!token) {
+          Alert.alert('Session Expired', 'Please log in again.');
+          navigation.navigate('Login');
+          return;
+        }
+
+        const response = await axios.get('https://resturantappbackend.onrender.com/user', {
+          headers: { Authorization: `Bearer ${token}` },
+        });
+
+        const userData = response.data;
+        setUser(userData);
+        setName(userData.name || '');
+        setEmail(userData.email || '');
+        setPhoneNumber(userData.phone || '');
+        setNotifications(userData.notifications || false);
+      } catch (error) {
+        console.error('Failed to fetch user data:', error);
+        Alert.alert('Error', 'Unable to fetch user details. Please try again.');
+      }
+    };
+
+    fetchUser();
+  }, [navigation]);
+
+  const handleSave = async () => {
+    try {
+      const token = await AsyncStorage.getItem('@authToken');
+      if (!token) {
+        Alert.alert('Error', 'You need to be logged in to save changes.');
+        return;
+      }
+
+      const updatedUser = { name, email, phone: phoneNumber, notifications };
+
+      await axios.put('https://resturantappbackend.onrender.com/api/user', updatedUser, {
+        headers: { Authorization: `Bearer ${token}` },
+      });
+
+      setUser(updatedUser);
+      Alert.alert('Success', 'Profile updated successfully!');
+    } catch (error) {
+      console.error('Failed to save user data:', error);
+      Alert.alert('Error', 'An error occurred while saving your profile. Please try again.');
+    }
+  };
+
+  const handleLogout = async () => {
+    await AsyncStorage.removeItem('@authToken');
+    Alert.alert('Logged Out', 'You have been logged out.');
+    navigation.reset({
+      index: 0,
+      routes: [{ name: 'Login' }],
+    });
   };
 
   return (
-    <ScrollView>
+    <ScrollView style={styles.scrollContainer}>
       <View style={styles.container}>
-        <View>
-                  <Image
-                      source={require('./assets/Feast-Finder-removebg-preview.png')}
-                      style={styles.logo}
-                      resizeMode="contain" />
-              </View>
+        <Image
+          source={require('./assets/Feast-Finder-removebg-preview.png')}
+          style={styles.logo}
+          resizeMode="contain"
+        />
         <Text style={styles.header}>Reservation Profile</Text>
-        
+
         <View style={styles.section}>
           <Text style={styles.label}>Name</Text>
           <TextInput
             style={styles.input}
             placeholder="Enter your name"
             value={name}
-            onChangeText={(text) => setName(text)}
+            onChangeText={setName}
           />
           <Text style={styles.label}>Email</Text>
           <TextInput
             style={styles.input}
-            placeholder="Enter Email"
-            value={name}
-            onChangeText={(text) => setEmail(text)}
+            placeholder="Enter your email"
+            value={email}
+            onChangeText={setEmail}
+            keyboardType="email-address"
+            autoCapitalize="none"
           />
-          <Text style={styles.label}>Phone number</Text>
+          <Text style={styles.label}>Phone Number</Text>
           <TextInput
             style={styles.input}
-            placeholder="Enter number"
-            value={name}
-            onChangeText={(text) => setPhoneNumber(text)}
+            placeholder="Enter your phone number"
+            value={phoneNumber}
+            onChangeText={setPhoneNumber}
+            keyboardType="phone-pad"
           />
-          
-
         </View>
-        
-        {/* <View style={styles.section}>
-          <Text style={styles.label}>Use Current Location</Text>
-          <Switch
-            value={useCurrentLocation}
-            onValueChange={(value) => setUseCurrentLocation(value)}
-          />
-        </View>       
-        
-        {!useCurrentLocation && (
-          <View style={styles.section}>
-            <Text style={styles.label}>Set Reservation Location</Text>
-            <TextInput
-              style={styles.input}
-              placeholder="Enter city or address"
-              value={location}
-              onChangeText={(text) => setLocation(text)}
-            />
-          </View>
-        )}
-         */}
-        
 
         <View style={styles.section}>
           <Text style={styles.label}>Reservation Notifications</Text>
           <Switch
             value={notifications}
-            onValueChange={(value) => setNotifications(value)}
+            onValueChange={setNotifications}
+            trackColor={{ false: '#767577', true: '#D74930' }}
+            thumbColor={notifications ? '#D74930' : '#f4f3f4'}
           />
         </View>
 
@@ -86,47 +121,38 @@ export default function ReservationProfile({ navigation }) {
           <Text style={styles.saveButtonText}>Save Profile</Text>
         </TouchableOpacity>
 
-        <ScrollView>
-          <View style={styles.savedInfo}>
-            <Text style={styles.savedText}>Name: {name || 'Not Set'}</Text>
-            <Text style={styles.savedText}>Email Address {email || 'Not Set'}</Text>
-            <Text style={styles.savedText}>Phone Number: {phoneNumber || 'Not Set'}</Text>
+        <View style={styles.savedInfo}>
+          <Text style={styles.savedText}>Name: {name || 'Not Set'}</Text>
+          <Text style={styles.savedText}>Email Address: {email || 'Not Set'}</Text>
+          <Text style={styles.savedText}>Phone Number: {phoneNumber || 'Not Set'}</Text>
+          <Text style={styles.savedText}>
+            Reservation Notifications: {notifications ? 'Enabled' : 'Disabled'}
+          </Text>
+        </View>
 
-            {/* <Text style={styles.savedText}>Location: {useCurrentLocation ? 'Current Location' : location || 'Not Set'}</Text> */}
-            
-            <Text style={styles.savedText}>Reservation Notifications: {notifications ? 'Enabled' : 'Disabled'}</Text>
-          </View>
-
-          <View style={styles.navigationButtons}>
-            <TouchableOpacity style={styles.navigationButton} onPress={() => navigation.navigate('Login')}>
-              <Text style={styles.navigationButtonText}>Logout</Text>
-            </TouchableOpacity>
-            {/* <TouchableOpacity style={styles.navigationButton} onPress={() => navigation.navigate('SignUp')}>
-              <Text style={styles.navigationButtonText}>Go to SignUp</Text>
-            </TouchableOpacity> */}
-          </View>
-
-          {/* <View style={styles.section}>
-            <Text style={styles.label}>Search Reservations in Another City</Text>
-            <TextInput
-              style={styles.input}
-              placeholder="Enter city for reservation"
-              value={cityReservation}
-              onChangeText={(text) => setCityReservation(text)}
-            />
-            <Text style={styles.savedText}>Reservations from {cityReservation || 'Unknown City'}</Text>
-          </View> */}
-        </ScrollView>
+        <TouchableOpacity style={styles.logoutButton} onPress={handleLogout}>
+          <Text style={styles.logoutButtonText}>Logout</Text>
+        </TouchableOpacity>
       </View>
     </ScrollView>
   );
 }
 
 const styles = StyleSheet.create({
+  scrollContainer: {
+    flex: 1,
+    backgroundColor: 'black',
+  },
   container: {
     flex: 1,
     padding: 20,
     backgroundColor: 'black',
+  },
+  logo: {
+    width: 200,
+    height: 200,
+    alignSelf: 'center',
+    marginBottom: 20,
   },
   header: {
     fontSize: 24,
@@ -134,11 +160,6 @@ const styles = StyleSheet.create({
     marginBottom: 20,
     textAlign: 'center',
     color: 'white',
-  },
-  logo: {
-    width: 200,
-    height: 200,
-    marginLeft:60,
   },
   section: {
     marginBottom: 20,
@@ -155,29 +176,12 @@ const styles = StyleSheet.create({
     padding: 10,
     backgroundColor: '#fff',
   },
-  row: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-  },
-  button: {
-    padding: 10,
-    borderRadius: 5,
-    backgroundColor: '#ccc',
-    width: '45%',
-    alignItems: 'center',
-  },
-  activeButton: {
-    backgroundColor: '#089dc2',
-  },
-  buttonText: {
-    color: '#fff',
-    fontSize: 16,
-  },
   saveButton: {
     backgroundColor: '#D74930',
     padding: 15,
     borderRadius: 5,
     alignItems: 'center',
+    marginTop: 10,
   },
   saveButtonText: {
     color: '#fff',
@@ -191,18 +195,15 @@ const styles = StyleSheet.create({
     color: 'white',
     marginBottom: 5,
   },
-  navigationButtons: {
+  logoutButton: {
+    backgroundColor: '#D74930',
+    padding: 15,
+    borderRadius: 5,
+    alignItems: 'center',
     marginTop: 20,
   },
-  navigationButton: {
-    backgroundColor: '#D74930',
-    padding: 10,
-    borderRadius: 5,
-    marginBottom: 10,
-    alignItems: 'center',
-  },
-  navigationButtonText: {
+  logoutButtonText: {
     color: '#fff',
-    fontSize: 16,
+    fontSize: 18,
   },
 });

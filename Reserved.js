@@ -10,88 +10,27 @@ import {
 } from 'react-native';
 import { LinearGradient } from 'expo-linear-gradient';
 
-const reservationsData = [
-  {
-    id: '1',
-    restaurantName: 'Roco Mamas',
-    time: '7:00 PM',
-    date: '2025-01-10',
-    image: require('./assets/images.jpg'),
-  },
-  {
-    id: '2',
-    restaurantName: 'KFC',
-    time: '6:30 PM',
-    date: '2025-01-12',
-    image: require('./assets/kfc-logo.jpg'),
-  },
-  {
-    id: '3',
-    restaurantName: 'Pizza Hut',
-    time: '8:00 PM',
-    date: '2025-01-14',
-    // image: require('./assets/pizza-hut-logo.jpg') ,
-  },
-  {
-    id: '4',
-    restaurantName: 'Burger King',
-    time: '7:30 PM',
-    date: '2025-01-16',
-    // image: require('./assets/burger-king-logo.jpg'),
-  },
-  {
-    id: '5',
-    restaurantName: 'McDonald’s',
-    time: '6:00 PM',
-    date: '2025-01-18',
-    // image: require('./assets/mcdonalds-logo.jpg'),
-  },
-  {
-    id: '6',
-    restaurantName: 'Nando’s',
-    time: '7:15 PM',
-    date: '2025-01-20',
-    // image: require('./assets/nandos-logo.jpg'),
-  },
-  {
-    id: '7',
-    restaurantName: 'Starbucks',
-    time: '5:00 PM',
-    date: '2025-01-22',
-    // image: require('./assets/starbucks-logo.jpg'),
-  },
-  {
-    id: '8',
-    restaurantName: 'Domino’s Pizza',
-    time: '6:45 PM',
-    date: '2025-01-24',
-    // image: require('./assets/dominos-logo.jpg'),
-  },
-  {
-    id: '9',
-    restaurantName: 'Subway',
-    time: '5:30 PM',
-    date: '2025-01-26',
-    // image: require('./assets/subway-logo.jpg'),
-  },
-  {
-    id: '10',
-    restaurantName: 'Ocean Basket',
-    time: '7:45 PM',
-    date: '2025-01-28',
-    // image: require('./assets/ocean-basket-logo.jpg'),
-  },
-];
+const API_URL = 'https://resturantappbackend.onrender.com/api/reservations'; // Update with your backend API endpoint
 
 export default function Reserved() {
   const [reservations, setReservations] = useState([]);
 
   useEffect(() => {
-    // Simulating fetching user-specific reservations.
-    setReservations(reservationsData);
+    // Fetch reservations from the API
+    const fetchReservations = async () => {
+      try {
+        const response = await fetch(API_URL);
+        const data = await response.json();
+        setReservations(data);  // Assuming data is an array of reservations
+      } catch (error) {
+        console.error('Error fetching reservations:', error);
+      }
+    };
+
+    fetchReservations();
   }, []);
 
-  const cancelReservation = (id) => {
+  const cancelReservation = async (id) => {
     Alert.alert(
       'Cancel Reservation',
       'Are you sure you want to cancel this reservation?',
@@ -99,9 +38,21 @@ export default function Reserved() {
         { text: 'No', style: 'cancel' },
         {
           text: 'Yes',
-          onPress: () => {
-            setReservations((prev) => prev.filter((res) => res.id !== id));
-            Alert.alert('Success', 'Reservation canceled successfully.');
+          onPress: async () => {
+            try {
+              const response = await fetch(`${API_URL}/${id}`, {
+                method: 'DELETE',
+              });
+              if (response.ok) {
+                setReservations((prev) => prev.filter((res) => res.id !== id));
+                Alert.alert('Success', 'Reservation canceled successfully.');
+              } else {
+                Alert.alert('Error', 'Failed to cancel reservation.');
+              }
+            } catch (error) {
+              console.error('Error canceling reservation:', error);
+              Alert.alert('Error', 'An error occurred while canceling the reservation.');
+            }
           },
         },
       ]
@@ -110,40 +61,39 @@ export default function Reserved() {
 
   const renderReservation = ({ item }) => (
     <View>
-        
-        <View style={styles.card}>
-                  <Image source={item.image} style={styles.image} />
-                  <View style={styles.cardContent}>
-                      <Text style={styles.restaurantName}>{item.restaurantName}</Text>
-                      <Text style={styles.details}>⏰ {item.time}</Text>
-                      <Text style={styles.details}>📅 {item.date}</Text>
-                      <TouchableOpacity
-                          style={styles.cancelButton}
-                          onPress={() => cancelReservation(item.id)}
-                      >
-                          <Text style={styles.cancelButtonText}>Cancel Reservation</Text>
-                      </TouchableOpacity>
-                  </View>
-              </View>
+      <View style={styles.card}>
+        {/* <Image  source={ {uri: item.imageUrl } } style={styles.image} /> */}
+        <View style={styles.cardContent}>
+          <Text style={styles.restaurantName}>{item.restaurantName}</Text>
+          <Text style={styles.details}>⏰ {item.time}</Text>
+          <Text style={styles.details}>📅 {item.date}</Text>
+          <TouchableOpacity
+            style={styles.cancelButton}
+            onPress={() => cancelReservation(item.id)}
+          >
+            <Text style={styles.cancelButtonText}>Cancel Reservation</Text>
+          </TouchableOpacity>
+        </View>
+      </View>
     </View>
   );
 
   return (
     <LinearGradient colors={['#1a1a1a', '#000000']} style={styles.gradient}>
       <View style={styles.container}>
-        
         <View>
           <Image
-              source={require('./assets/Feast-Finder-removebg-preview.png')}
-              style={styles.logo}
-              resizeMode="contain" />
-      </View>
-      <Text style={styles.title}>Your Reservations</Text>
+            source={require('./assets/Feast-Finder-removebg-preview.png')}
+            style={styles.logo}
+            resizeMode="contain"
+          />
+        </View>
+        <Text style={styles.title}>Your Reservations</Text>
         {reservations.length > 0 ? (
           <FlatList
             data={reservations}
             renderItem={renderReservation}
-            keyExtractor={(item) => item.id}
+            keyExtractor={(item) => item.id.toString()}
             contentContainerStyle={styles.listContainer}
           />
         ) : (
@@ -166,7 +116,7 @@ const styles = StyleSheet.create({
   logo: {
     width: 200,
     height: 200,
-    marginLeft:60,
+    marginLeft: 60,
   },
   title: {
     fontSize: 24,

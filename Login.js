@@ -20,7 +20,7 @@ const LoginScreen = ({ navigation }) => {
       Alert.alert('Validation Error', 'Please enter a valid email');
       return;
     }
-
+  
     try {
       const response = await fetch('https://resturantappbackend.onrender.com/api/login', {
         method: 'POST',
@@ -29,52 +29,65 @@ const LoginScreen = ({ navigation }) => {
         },
         body: JSON.stringify({ email, password }),
       });
-
+  
       const result = await response.json();
-
+  
       if (response.ok) {
-        await AsyncStorage.setItem('token', result.token);
+        await AsyncStorage.setItem('@authToken', result.token); 
+  
+        
+        if (result.role === 'admin' || email === 'admin@gmail.com') {
+          navigation.reset({
+            index: 0,
+            routes: [{ name: 'Admin' }],
+          });
+        } else {
+          navigation.reset({
+            index: 0,
+            routes: [{ name: 'Tabs' }], 
+          });
+        }
+  
         Alert.alert('Success', 'Logged in successfully');
-        navigation.navigate('Tabs'); // Adjust this to your home/main screen
       } else {
         Alert.alert('Error', result.message || 'Invalid credentials');
       }
     } catch (error) {
-      Alert.alert('Error', 'Failed to connect to the server');
+      Alert.alert('Error', 'Failed to connect to the server. Please try again later.');
       console.error(error);
     }
   };
-
+  
   return (
-    <View style={styles.container1}>
-      <View>
-        <Image
-          source={require('./assets/Feast-Finder-removebg-preview.png')}
-          style={{ width: 200, height: 200 }}
-          resizeMode="contain"
-        />
-      </View>
+    <View style={styles.container}>
+      <Image
+        source={require('./assets/Feast-Finder-removebg-preview.png')}
+        style={styles.logo}
+        resizeMode="contain"
+      />
       <Text style={styles.headerText}>Login</Text>
       <TextInput
         style={styles.input}
-        placeholder="Email"
+        placeholder="Enter your email"
         placeholderTextColor="#a8a8a8"
         value={email}
         onChangeText={setEmail}
+        keyboardType="email-address"
+        autoCapitalize="none"
       />
       <TextInput
         style={styles.input}
-        placeholder="Password"
+        placeholder="Enter your password"
         placeholderTextColor="#a8a8a8"
         secureTextEntry
         value={password}
         onChangeText={setPassword}
       />
-      <Text style={styles.link1} onPress={() => navigation.navigate('password')}>
+      <Text style={styles.forgotPasswordLink} onPress={() => navigation.navigate('Password')}>
         Forgot Password?
       </Text>
-      <Button title="Login" style={{ width: 280, height: 240 }} onPress={handleLogin} color="#D74930" />
-      <Text style={styles.link} onPress={() => navigation.navigate('SignUp')}>
+      <Button title="Login" onPress={handleLogin} color="#D74930" />
+      <Text style={styles.signUpLink} onPress={() => navigation.navigate('SignUp')}>
         Don't have an account? Sign Up
       </Text>
     </View>
@@ -82,12 +95,16 @@ const LoginScreen = ({ navigation }) => {
 };
 
 const styles = StyleSheet.create({
-  container1: {
+  container: {
     flex: 1,
     justifyContent: 'center',
     alignItems: 'center',
     padding: 16,
     backgroundColor: 'black',
+  },
+  logo: {
+    width: 200,
+    height: 200,
   },
   headerText: {
     fontSize: 24,
@@ -98,22 +115,23 @@ const styles = StyleSheet.create({
   },
   input: {
     height: 50,
-    width: 280,
+    width: '90%',
     borderColor: '#D74930',
     borderWidth: 1,
-    marginBottom: 10,
-    paddingHorizontal: 8,
+    marginBottom: 15,
+    paddingHorizontal: 10,
     color: 'white',
-    borderRadius: 10,
+    borderRadius: 8,
+    backgroundColor: '#1a1a1a',
   },
-  link: {
+  forgotPasswordLink: {
     color: '#D74930',
-    marginTop: 10,
-    textAlign: 'center',
+    alignSelf: 'flex-end',
+    marginBottom: 20,
   },
-  link1: {
+  signUpLink: {
     color: '#D74930',
-    marginLeft: 159,
+    marginTop: 15,
   },
 });
 

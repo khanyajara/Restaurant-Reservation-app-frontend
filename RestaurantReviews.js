@@ -21,12 +21,12 @@ export default function ReviewScreen({ navigation }) {
   const [loading, setLoading] = useState(false);
 
   useEffect(() => {
-    // fetch reviews from API or database
+   
     const fetchReviews = async () => {
       setLoading(true);
       try {
-        // replace with actual API call
-        const response = await fetch('https://example.com/reviews');
+        
+        const response = await fetch('https://restaurantappbackend.onrender.com/api/reviews');
         const data = await response.json();
         setReviews(data);
       } catch (error) {
@@ -39,7 +39,7 @@ export default function ReviewScreen({ navigation }) {
   }, []);
 
   const handleReviewSubmit = () => {
-    // submit review to API or database
+    
     const newReview = { review, rating };
     setReviews([...reviews, newReview]);
     setReview('');

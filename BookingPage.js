@@ -10,6 +10,8 @@ import {
 import { Picker } from '@react-native-picker/picker';
 import DateTimePicker from '@react-native-community/datetimepicker';
 
+const API_URL = 'https://resturantappbackend.onrender.com/reservations'; 
+
 const BookingPage = ({ route, navigation }) => {
   const { restaurant } = route.params;
   const [date, setDate] = useState(new Date());
@@ -19,7 +21,7 @@ const BookingPage = ({ route, navigation }) => {
   const [contactPhone, setContactPhone] = useState('');
   const [showDatePicker, setShowDatePicker] = useState(false);
 
-  const handleBooking = () => {
+  const handleBooking = async () => {
     if (!contactName || !contactPhone || !time) {
       Alert.alert(
         'Error',
@@ -37,13 +39,31 @@ const BookingPage = ({ route, navigation }) => {
       contactPhone,
     };
 
-    console.log(bookingDetails);
+    try {
+      const response = await fetch(API_URL, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify(bookingDetails),
+      });
 
-    Alert.alert(
-      'Booking Confirmed',
-      `Your reservation at ${restaurant.name} has been confirmed.`
-    );
-    navigation.goBack();
+      if (!response.ok) {
+        throw new Error('Failed to create reservation');
+      }
+
+      const responseData = await response.json();
+      console.log('Booking Confirmed:', responseData);
+
+      Alert.alert(
+        'Booking Confirmed',
+        `Your reservation at ${restaurant.name} has been confirmed.`
+      );
+      navigation.goBack();
+    } catch (error) {
+      console.error('Error making booking:', error);
+      Alert.alert('Error', 'There was an issue with your booking. Please try again later.');
+    }
   };
 
   const onDateChange = (event, selectedDate) => {
