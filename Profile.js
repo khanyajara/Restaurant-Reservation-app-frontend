@@ -2,6 +2,7 @@ import React, { useEffect, useState } from 'react';
 import { StyleSheet, Text, View, TextInput, Switch, Image, TouchableOpacity, ScrollView, Alert } from 'react-native';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import axios from 'axios';
+import Collapsible from 'react-native-collapsible';
 
 export default function ReservationProfile({ navigation }) {
   const [user, setUser] = useState(null);
@@ -9,6 +10,7 @@ export default function ReservationProfile({ navigation }) {
   const [email, setEmail] = useState('');
   const [phoneNumber, setPhoneNumber] = useState('');
   const [notifications, setNotifications] = useState(false);
+  const [isCollapsed, setIsCollapsed] = useState(true);
 
   useEffect(() => {
     const fetchUser = async () => {
@@ -20,7 +22,7 @@ export default function ReservationProfile({ navigation }) {
           return;
         }
 
-        const response = await axios.get('https://resturantappbackend.onrender.com/user', {
+        const response = await axios.get('https://resturantappbackend.onrender.com/api/user', {
           headers: { Authorization: `Bearer ${token}` },
         });
 
@@ -80,46 +82,57 @@ export default function ReservationProfile({ navigation }) {
         />
         <Text style={styles.header}>Reservation Profile</Text>
 
-        <View style={styles.section}>
-          <Text style={styles.label}>Name</Text>
-          <TextInput
-            style={styles.input}
-            placeholder="Enter your name"
-            value={name}
-            onChangeText={setName}
-          />
-          <Text style={styles.label}>Email</Text>
-          <TextInput
-            style={styles.input}
-            placeholder="Enter your email"
-            value={email}
-            onChangeText={setEmail}
-            keyboardType="email-address"
-            autoCapitalize="none"
-          />
-          <Text style={styles.label}>Phone Number</Text>
-          <TextInput
-            style={styles.input}
-            placeholder="Enter your phone number"
-            value={phoneNumber}
-            onChangeText={setPhoneNumber}
-            keyboardType="phone-pad"
-          />
-        </View>
-
-        <View style={styles.section}>
-          <Text style={styles.label}>Reservation Notifications</Text>
-          <Switch
-            value={notifications}
-            onValueChange={setNotifications}
-            trackColor={{ false: '#767577', true: '#D74930' }}
-            thumbColor={notifications ? '#D74930' : '#f4f3f4'}
-          />
-        </View>
-
-        <TouchableOpacity style={styles.saveButton} onPress={handleSave}>
-          <Text style={styles.saveButtonText}>Save Profile</Text>
+        <TouchableOpacity
+          style={styles.accordionHeader}
+          onPress={() => setIsCollapsed(!isCollapsed)}
+        >
+          <Text style={styles.accordionHeaderText}>
+            {isCollapsed ? 'Edit Profile Details' : 'Collapse Profile Details'}
+          </Text>
         </TouchableOpacity>
+
+        <Collapsible collapsed={isCollapsed}>
+          <View style={styles.section}>
+            <Text style={styles.label}>Name</Text>
+            <TextInput
+              style={styles.input}
+              placeholder="Enter your name"
+              value={name}
+              onChangeText={setName}
+            />
+            <Text style={styles.label}>Email</Text>
+            <TextInput
+              style={styles.input}
+              placeholder="Enter your email"
+              value={email}
+              onChangeText={setEmail}
+              keyboardType="email-address"
+              autoCapitalize="none"
+            />
+            <Text style={styles.label}>Phone Number</Text>
+            <TextInput
+              style={styles.input}
+              placeholder="Enter your phone number"
+              value={phoneNumber}
+              onChangeText={setPhoneNumber}
+              keyboardType="phone-pad"
+            />
+          </View>
+
+          <View style={styles.section}>
+            <Text style={styles.label}>Reservation Notifications</Text>
+            <Switch
+              value={notifications}
+              onValueChange={setNotifications}
+              trackColor={{ false: '#767577', true: '#D74930' }}
+              thumbColor={notifications ? '#D74930' : '#f4f3f4'}
+            />
+          </View>
+
+          <TouchableOpacity style={styles.saveButton} onPress={handleSave}>
+            <Text style={styles.saveButtonText}>Save Profile</Text>
+          </TouchableOpacity>
+        </Collapsible>
 
         <View style={styles.savedInfo}>
           <Text style={styles.savedText}>Name: {name || 'Not Set'}</Text>
@@ -160,6 +173,17 @@ const styles = StyleSheet.create({
     marginBottom: 20,
     textAlign: 'center',
     color: 'white',
+  },
+  accordionHeader: {
+    backgroundColor: '#D74930',
+    padding: 15,
+    borderRadius: 5,
+    alignItems: 'center',
+    marginBottom: 10,
+  },
+  accordionHeaderText: {
+    color: '#fff',
+    fontSize: 18,
   },
   section: {
     marginBottom: 20,

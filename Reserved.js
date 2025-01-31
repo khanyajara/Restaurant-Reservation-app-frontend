@@ -10,7 +10,7 @@ import {
 } from 'react-native';
 import { LinearGradient } from 'expo-linear-gradient';
 
-const API_URL = 'https://resturantappbackend.onrender.com/api/reservations'; // Update with your backend API endpoint
+const API_URL = 'https://resturantappbackend.onrender.com/reservations'; 
 
 export default function Reserved() {
   const [reservations, setReservations] = useState([]);
@@ -19,16 +19,23 @@ export default function Reserved() {
     // Fetch reservations from the API
     const fetchReservations = async () => {
       try {
-        const response = await fetch(API_URL);
+        const response = await fetch(API_URL, {
+          method: 'GET',
+          headers: {
+            'Authorization': `Bearer ${token}`,
+            'Content-Type': 'application/json', 
+          },
+        });
         const data = await response.json();
-        setReservations(data);  // Assuming data is an array of reservations
+        setReservations(data);  
       } catch (error) {
         console.error('Error fetching reservations:', error);
       }
     };
-
+  
     fetchReservations();
   }, []);
+  
 
   const cancelReservation = async (id) => {
     Alert.alert(

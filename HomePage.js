@@ -12,16 +12,21 @@ import {
   Dimensions,
   Modal,
   ActivityIndicator,
+  Button,
 } from 'react-native';
 import { LinearGradient } from 'expo-linear-gradient';
 import Icon from 'react-native-vector-icons/FontAwesome';
 import axios from 'axios';
-// import { format } from 'date-fns';
+import AsyncStorage from '@react-native-async-storage/async-storage';
+import moment from 'moment';
+import { useNavigation } from '@react-navigation/native';
+
 
 const { height: screenHeight } = Dimensions.get('window');
 
 export default function HomeScreen({ navigation }) {
   const [restaurants, setRestaurants] = useState([]);
+  const [restuarantId, setRestuarantId] = useState('')
   const [detailsVisible, setDetailsVisible] = useState(false);
   const [selectedRestaurant, setSelectedRestaurant] = useState(null);
   const [viewingReservations, setViewingReservations] = useState(false);
@@ -33,6 +38,12 @@ export default function HomeScreen({ navigation }) {
   const [loading, setLoading] = useState(false);
   const slideAnimation = new Animated.Value(screenHeight);
   const reservationSlideAnimation = new Animated.Value(screenHeight);
+
+  const API_URL = 'https://resturantappbackend.onrender.com/reservation';
+const PAY_API_URL = 'https://resturantappbackend.onrender.com/pay';
+
+
+const navigate= useNavigation();
 
   useEffect(() => {
     const fetchRestaurants = async () => {
@@ -129,6 +140,129 @@ export default function HomeScreen({ navigation }) {
     },
   ];
 
+
+
+  const promoCodes = [
+    {
+      code: "SAVE10",
+      discount: 10, // 10% off
+      description: "Get 10% off your next reservation",
+      expirationDate: "2025-02-28",
+    },
+    {
+      code: "FREE DESSERT",
+      discount: 0, // Free dessert
+      description: "Free dessert with any reservation",
+      expirationDate: "2025-03-15",
+    },
+    {
+      code: "FIRST TIME20",
+      discount: 20, // 20% off
+      description: "20% off for first-time customers",
+      expirationDate: "2025-04-01",
+    },
+    {
+      code: "FREE DELIVERY",
+      discount: 0, // Free delivery
+      description: "Free delivery on orders above $50",
+      expirationDate: "2025-03-31",
+    },
+    {
+      code: "LUNCH TIME15",
+      discount: 15, // 15% off
+      description: "Get 15% off on lunch reservations between 12pm - 2pm",
+      expirationDate: "2025-02-10",
+    },
+    {
+      code: "BRUNCH30",
+      discount: 30, // 30% off
+      description: "Save 30% on brunch reservations over the weekend",
+      expirationDate: "2025-03-20",
+    },
+    {
+      code: "HOLIDAY10",
+      discount: 10, // 10% off
+      description: "10% off on holiday bookings",
+      expirationDate: "2025-12-31",
+    },
+    {
+      code: "GROUP20",
+      discount: 20, // 20% off
+      description: "20% off for group reservations of 6 or more",
+      expirationDate: "2025-05-01",
+    },
+    {
+      code: "WEEKDAY50",
+      discount: 50, // 50% off
+      description: "50% off on all reservations made Monday - Wednesday",
+      expirationDate: "2025-06-15",
+    },
+    {
+      code: "TAKEAWAY5",
+      discount: 5, // $5 off
+      description: "$5 off takeaway orders over $30",
+      expirationDate: "2025-07-01",
+    },
+    {
+      code: "STUDENT DISCOUNT",
+      discount: 15, // 15% off
+      description: "15% off for students with a valid ID",
+      expirationDate: "2025-09-01",
+    },
+    {
+      code: "LUXURY DINING25",
+      discount: 25, // 25% off
+      description: "25% off luxury dining experience bookings",
+      expirationDate: "2025-05-15",
+    },
+    {
+      code: "TUESDAY TREAT",
+      discount: 10, // 10% off
+      description: "Get 10% off on all reservations made on Tuesdays",
+      expirationDate: "2025-02-01",
+    },
+    {
+      code: "FAMILY40",
+      discount: 40, // 40% off
+      description: "40% off for family bookings (4+ people)",
+      expirationDate: "2025-06-30",
+    },
+    {
+      code: "SEASONAL DEAL",
+      discount: 20, // 20% off
+      description: "20% off during the seasonal offer (Summer/Fall)",
+      expirationDate: "2025-08-31",
+    },
+    {
+      code: "LOYALTY10",
+      discount: 10, // 10% off
+      description: "10% off for loyal customers on their 5th reservation",
+      expirationDate: "2025-12-01",
+    },
+    {
+      code: "VIP EXCLUSIVE",
+      discount: 0, // Exclusive offer (Free appetizer)
+      description: "Exclusive VIP offer: Free appetizer with every reservation",
+      expirationDate: "2025-11-01",
+    },
+    {
+      code: "SINGLE20",
+      discount: 20, // 20% off
+      description: "20% off for solo diners",
+      expirationDate: "2025-03-31",
+    },
+    {
+      code: "DESSERT LOVER",
+      discount: 0, // Free dessert
+      description: "Free dessert with every reservation over $50",
+      expirationDate: "2025-05-31",
+    },
+  ];
+  
+  console.log(promoCodes);
+  
+  
+
   const hideDetails = () => {
     Animated.timing(slideAnimation, {
       toValue: screenHeight,
@@ -159,11 +293,23 @@ export default function HomeScreen({ navigation }) {
     }
   };
 
-  const bookReservation = () => {
-    alert(`You have successfully booked a table for ${selectedReservation.time}`);
-    setViewingReservations(false);
-    hideDetails();
+  const bookReservation = async (reservation) => {
+    console.log('Navigation function called');
+    console.log('Selected Restaurant:', selectedRestaurant);
+    console.log('Reservation:', reservation);
+  
+    if (!selectedRestaurant) {
+      console.error('Selected restaurant is required to proceed with booking');
+      return;
+    }
+  
+    navigation.navigate('Booking', {
+      restaurant: selectedRestaurant,
+      reservation: selectedRestaurant.availableSlots, 
+    });
   };
+  
+  
 
   const refreshPage = () => {
     setLoading(true);
@@ -225,6 +371,21 @@ export default function HomeScreen({ navigation }) {
       </ScrollView>
     </TouchableOpacity>
   );
+  const renderRestaurantImages = ({ item }) => {
+    return (
+      <ScrollView>
+        <View style={styles.row}>
+          {restaurants.map((data) => (
+            <TouchableOpacity key={data.id}>
+              <View style={styles.ImageContainer}>
+                <Image source={{ uri: data.imageUrl }} style={styles.images} />
+              </View>
+            </TouchableOpacity>
+          ))}
+        </View>
+      </ScrollView>
+    );
+  };
   
 
   const renderHotDeals = () => (
@@ -237,6 +398,20 @@ export default function HomeScreen({ navigation }) {
       ))}
     </ScrollView>
   );
+
+  const renderPromoCodes = () => (
+    <ScrollView horizontal showsHorizontalScrollIndicator={false} style={styles.PromoContainer}>
+      {promoCodes.map((codes) => (
+        <View key={codes.id} style={styles.hotDealCard}>
+          <Text style={styles.hotDealName}>{codes.code}</Text>
+          <Text style={styles.hotDealDescription}>{codes.discount}</Text>
+          <Text style={styles.hotDealDescription}>{codes.description}</Text>
+          <Text style={styles.hotDealDescription}>{codes.expirationDate}</Text>
+        </View>
+      ))}
+    </ScrollView>
+  );
+
 
   return (
     <LinearGradient colors={['#1a1a1a', '#000000']} style={styles.gradient}>
@@ -307,19 +482,34 @@ export default function HomeScreen({ navigation }) {
             </View>
           </View>
         </Modal>
-
-        <FlatList
-            ListHeaderComponent={renderHotDeals}/>
-        
+<ScrollView>
+  
           <FlatList
-            
-            data={restaurants}
+              ListHeaderComponent={renderHotDeals}
+              keyExtractor={(item) => item.id}
+              />
+  <FlatList
+            ListHeaderComponent={renderRestaurantImages}
             horizontal={true}
-            renderItem={renderRestaurant}
+            
             keyExtractor={(item) => item.id}
-            contentContainerStyle={styles.listContainer}
-          />
-        
+            />
+            <FlatList
+  
+              data={restaurants}
+              horizontal={true}
+              renderItem={renderRestaurant}
+              keyExtractor={(item) => item.id}
+              contentContainerStyle={styles.listContainer}
+            />
+  
+            <FlatList
+            ListHeaderComponent={renderPromoCodes}
+            keyExtractor={(item) => item.id}
+            />
+
+            
+</ScrollView>
 
 
         {detailsVisible && (
@@ -334,11 +524,11 @@ export default function HomeScreen({ navigation }) {
   >
     <ScrollView style={styles.detailsContent}>
       {/* Displaying Restaurant Details */}
-      <View style={styles.restaurantContainer}>
+      <View style={styles.restaurantName}>
         {/* Display Restaurant Image */}
         <Image
           source={{ uri: selectedRestaurant?.imageUrl }} // Using image URL or Base64
-          style={styles.restaurantImage}
+          style={styles.restaurantName}
         />
         
         {/* Restaurant Name */}
@@ -365,7 +555,7 @@ export default function HomeScreen({ navigation }) {
 
       {/* Toggle Reservations and Reviews */}
       <TouchableOpacity style={styles.reservationButton} onPress={toggleReservations}>
-        <Text style={styles.reservationButtonText}>
+        <Text style={styles.reservationButton}>
           {viewingReservations ? 'Hide Reservations' : 'View Available Reservations'}
         </Text>
       </TouchableOpacity>
@@ -408,23 +598,26 @@ export default function HomeScreen({ navigation }) {
               <Text style={styles.detailsTitle}>Available Reservations for {selectedRestaurant?.name}</Text>
   
               <View style={styles.reservationsList}>
-                <Text style={styles.reservationTitle}>Available Reservations:</Text>
+                <Text style={styles.reservationTime}>Available Reservations:</Text>
                 {selectedRestaurant?.availableSlots.map((reservation, index) => (
                   <View key={index} style={styles.reservationItem}>
-                    <Text style={styles.reservationTime}>{reservation.startTime} - {reservation.endTime}</Text>
+                    <Text style={styles.reservationTime}>{moment(reservation.startTime).format('LT')} </Text>
+                    <Text style={styles.reservationTime}> {moment(reservation.endTime).format('LT')}</Text>
                     <Text style={styles.availableTables}>
                       {reservation.isAvailable ? 'Available' : 'Not Available'}
                     </Text>
-                    <TouchableOpacity
+                    <Button
+                    title='book now'
                       style={styles.bookButton}
-                      onPress={() => {
-                        setSelectedReservation(reservation);
-                        bookReservation();
-                        gotoReservation();
-                      }}
+                      onPress={()=>
+                        // setSelectedReservation(reservation);
+                        bookReservation(reservation)
+                       
+                        
+                      }
                     >
-                      <Text style={styles.bookButtonText}>Book Now</Text>
-                    </TouchableOpacity>
+                      
+                    </Button>
                   </View>
                 ))}
               </View>
@@ -458,6 +651,10 @@ const styles = StyleSheet.create({
     width: 200,
     height: 200,
     marginLeft: 80,
+  },
+  row:{
+    display:"flex",
+    flexDirection:"row"
   },
   ios: {
     marginLeft: 25,
@@ -601,6 +798,10 @@ const styles = StyleSheet.create({
     backgroundColor: '#444',
     padding: 10,
   },
+  PromoContainer: {
+    marginBottom: 20,
+    height:'auto',
+  },
   hotDealImage: {
     width: '100%',
     height: 100,
@@ -702,6 +903,21 @@ const styles = StyleSheet.create({
   bookButtonText: {
     color: '#fff',
     fontSize: 16,
+  },
+  ImageContainer: {
+    width: 60,         
+    height: 60,          
+    borderRadius: 30,  
+      
+    overflow: 'hidden',  
+    justifyContent: 'center',
+    alignItems: 'center',
+    margin: 10,         
+  },
+  images: {
+    width: '100%',       
+    height: '100%',      
+    resizeMode: 'cover',
   },
 }); 
 

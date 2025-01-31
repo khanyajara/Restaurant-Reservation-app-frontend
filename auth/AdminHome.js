@@ -23,7 +23,7 @@ const AdminPage = () => {
     { title: 'Add New Restaurant', content: 'Form content goes here' },
   ]);
   const [activeSections, setActiveSections] = useState([]);
-  const [isRestaurantList, setIsRestaurantList] = useState(true); // New state to toggle between restaurant and user list
+  const [isRestaurantList, setIsRestaurantList] = useState(true); 
   const navigation = useNavigation();
 
   useEffect(() => {
@@ -42,36 +42,47 @@ const AdminPage = () => {
   };
 
   const fetchAllUser = async () => {
-    try {
-      const token = await AsyncStorage.getItem('@authToken');
-      if (!token) {
-        Alert.alert('Error', 'No authentication token found');
-        return;
-      }
-  
-      const response = await axios.get('https://resturantappbackend.onrender.com/api/users', {
-        headers: { Authorization: `Bearer ${token}` },
-      });
-  
-      // Log the full response to check its structure
-      console.log('Fetched response:', response);
-  
-      // Directly access the array of users from response.data
-      if (Array.isArray(response.data)) {
-        setUsers(response.data);
-      } else {
-        Alert.alert('Error', 'Invalid response structure for users');
-      }
-    } catch (error) {
-      if (error.response) {
-        Alert.alert('Error', `Failed to fetch users: ${error.response.data.message || error.message}`);
-      } else {
-        Alert.alert('Error', 'Network error or server not reachable');
-      }
-      console.error(error);
+  try {
+    const token = await AsyncStorage.getItem('@authToken');
+    if (!token) {
+      Alert.alert('Error', 'No authentication token found');
+      return;
     }
-  };
-  
+
+    const response = await axios.get('https://resturantappbackend.onrender.com/api/users', {
+      headers: { Authorization: `Bearer ${token}` },
+    });
+
+    // Log the full response to check its structure
+    console.log('Fetched response:', response);
+
+    // Directly access the array of users from response.data
+    if (Array.isArray(response.data)) {
+      setUsers(response.data);
+    } else {
+      Alert.alert('Error', 'Invalid response structure for users');
+    }
+  } catch (error) {
+    if (error.response) {
+      Alert.alert('Error', `Failed to fetch users: ${error.response.data.message || error.message}`);
+    } else {
+      Alert.alert('Error', 'Network error or server not reachable');
+    }
+    console.error(error);
+  }
+};
+
+const handleUpdateRestaurant = async (id, updatedData) => {
+  try {
+    await axios.put(`https://resturantappbackend.onrender.com/api/${id}`, updatedData);
+    Alert.alert('Success', 'Restaurant updated successfully');
+    fetchRestaurants(); 
+  } catch (error) {
+    console.error(error);
+    Alert.alert('Error', 'Failed to update restaurant');
+  }
+};
+
   
   const handleAddRestaurant = async () => {
     if (!newRestaurant.name || !newRestaurant.cuisine || !newRestaurant.location || !newRestaurant.rating) {
@@ -80,7 +91,7 @@ const AdminPage = () => {
     }
 
     try {
-      await axios.post('https://resturantappbackend.onrender.com/api/getR', newRestaurant);
+      await axios.post('https://resturantappbackend.onrender.com/api/addR', newRestaurant);
       Alert.alert('Success', 'Restaurant added successfully');
       fetchRestaurants();
     } catch (error) {
@@ -88,6 +99,18 @@ const AdminPage = () => {
       Alert.alert('Error', 'Failed to add restaurant');
     }
   };
+
+  const handleDeleteRestaurant = async (id) => {
+    try {
+      await axios.delete(`https://resturantappbackend.onrender.com/api/${id}`);
+      Alert.alert('Success', 'Restaurant deleted successfully');
+      fetchRestaurants(); // Refresh the list
+    } catch (error) {
+      console.error(error);
+      Alert.alert('Error', 'Failed to delete restaurant');
+    }
+  };
+  
 
   const handleLogout = async () => {
     try {
@@ -97,6 +120,33 @@ const AdminPage = () => {
       console.error('Logout error:', error);
     }
   };
+  const handleUpdateUser = async (id, updatedData) => {
+    try {
+      await axios.put(`https://resturantappbackend.onrender.com/api/users/${id}`, updatedData, {
+        headers: { Authorization: `Bearer ${await AsyncStorage.getItem('@authToken')}` },
+      });
+      Alert.alert('Success', 'User updated successfully');
+      fetchAllUser(); // Refresh the list
+    } catch (error) {
+      console.error(error);
+      Alert.alert('Error', 'Failed to update user');
+    }
+  };
+
+  const handleDeleteUser = async (id) => {
+    try {
+      await axios.delete(`https://resturantappbackend.onrender.com/api/users/${id}`, {
+        headers: { Authorization: `Bearer ${await AsyncStorage.getItem('@authToken')}` },
+      });
+      Alert.alert('Success', 'User deleted successfully');
+      fetchAllUser(); // Refresh the list
+    } catch (error) {
+      console.error(error);
+      Alert.alert('Error', 'Failed to delete user');
+    }
+  };
+  
+  
 
   const renderHeader = (section, _, isActive) => (
     <View style={[styles.itemContainer, isActive && styles.activeHeader]}>
@@ -167,7 +217,7 @@ const AdminPage = () => {
         underlayColor="#f0f0f0"
       />
 
-      {/* Toggle between restaurant and user lists */}
+     
       <View style={styles.containerButton}>
         <TouchableOpacity style={styles.button} onPress={() => setIsRestaurantList(true)}>
           <Icon name="restaurant" size={30} color="#000" />
@@ -177,7 +227,7 @@ const AdminPage = () => {
         </TouchableOpacity>
       </View>
 
-      {/* Conditionally render the restaurant or user list */}
+      
       {isRestaurantList ? (
         <View>
           <Text style={styles.subHeader}>Restaurants</Text>

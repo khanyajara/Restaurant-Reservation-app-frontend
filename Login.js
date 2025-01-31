@@ -83,7 +83,7 @@ const LoginScreen = ({ navigation }) => {
         value={password}
         onChangeText={setPassword}
       />
-      <Text style={styles.forgotPasswordLink} onPress={() => navigation.navigate('Password')}>
+      <Text style={styles.forgotPasswordLink} onPress={() => navigation.navigate('password')}>
         Forgot Password?
       </Text>
       <Button title="Login" onPress={handleLogin} color="#D74930" />
