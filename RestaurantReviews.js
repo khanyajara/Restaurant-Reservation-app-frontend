@@ -26,7 +26,10 @@ export default function ReviewScreen({ navigation }) {
       setLoading(true);
       try {
         
-        const response = await fetch('https://restaurantappbackend.onrender.com/api/reviews');
+        const response = await fetch('https://restaurantappbackend.onrender.com/api/reviews', {
+          method: 'GET',
+
+        });
         const data = await response.json();
         setReviews(data);
       } catch (error) {
@@ -39,12 +42,23 @@ export default function ReviewScreen({ navigation }) {
   }, []);
 
   const handleReviewSubmit = () => {
+    try{
+      const response = fetch('https://restaurantappbackend.onrender.com/api/reviews', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          },
+    })
     
     const newReview = { review, rating };
     setReviews([...reviews, newReview]);
     setReview('');
     setRating(0);
-  };
+  }
+  catch(error){
+    console.error(error);
+    }
+    };
 
   return (
     <View style={styles.container}>

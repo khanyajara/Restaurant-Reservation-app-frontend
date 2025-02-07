@@ -1,11 +1,9 @@
 import React, { useState, useEffect } from 'react';
-import { View, Text, TextInput, StyleSheet, Alert, TouchableOpacity, FlatList } from 'react-native';
+import { View, Text, TextInput, StyleSheet, Alert, TouchableOpacity } from 'react-native';
 import { Picker } from '@react-native-picker/picker';
 import DateTimePicker from '@react-native-community/datetimepicker';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import moment from 'moment';
-
-
 
 const API_URL = 'https://resturantappbackend.onrender.com/reservation';
 const PAY_API_URL = 'https://resturantappbackend.onrender.com/pay';
@@ -16,9 +14,9 @@ const BookingPage = ({ route, navigation }) => {
 
   const [date, setDate] = useState(new Date());
   const [selectedSlot, setSelectedSlot] = useState(null);
-  const [numPeople, setNumPeople] = useState(1);
-  const [contactName, setContactName] = useState('');
-  const [contactPhone, setContactPhone] = useState('');
+  const [numPeople, setNumPeople] = useState(2);
+  const [fullname, setFullName] = useState('');
+  const [phonenumber, setPhoneNumber] = useState('');
   const [tableType, setTableType] = useState('regular');
   const [loading, setLoading] = useState(false);
   const [showDatePicker, setShowDatePicker] = useState(false);
@@ -27,7 +25,6 @@ const BookingPage = ({ route, navigation }) => {
 
   const [Reservation, setReservations] = useState(reservationsArray);
 
-  // Handle date change
   const onDateChange = (event, selectedDate) => {
     const currentDate = selectedDate || date;
     setShowDatePicker(false);
@@ -35,7 +32,6 @@ const BookingPage = ({ route, navigation }) => {
     filterSlotsByDate(currentDate);
   };
 
-  // Filter time slots based on selected date
   const filterSlotsByDate = (selectedDate) => {
     if (restaurant?.timeSlots && Array.isArray(restaurant.timeSlots)) {
       const formattedDate = moment(selectedDate).format('YYYY-MM-DD');
@@ -50,7 +46,6 @@ const BookingPage = ({ route, navigation }) => {
     }
   };
 
-  // Calculate total amount dynamically
   useEffect(() => {
     if (!restaurant || !restaurant.amount || numPeople <= 0) return;
 
@@ -61,9 +56,8 @@ const BookingPage = ({ route, navigation }) => {
     setTotalAmount(basePrice * numPeople);
   }, [numPeople, tableType]);
 
-  // Handle booking
-  const handleBooking = async () => {
-    if (!contactName || !contactPhone || !selectedSlot || numPeople <= 0) {
+  const Booking = async () => {
+    if (!fullname || !phonenumber || !selectedSlot || numPeople <= 0) {
       Alert.alert('Error', 'Please fill in all fields and select a time slot');
       return;
     }
@@ -90,15 +84,16 @@ const BookingPage = ({ route, navigation }) => {
       restaurantId: restaurant._id,
       startTime,
       endTime,
-      userId,
       numberOfGuests: numPeople,
-      contactName,
-      contactPhone,
+      fullname,
+      phonenumber,
       tableType,
       amount: totalAmount,
       notifications: [{ time: moment().toISOString(), success: false }],
       status: 'pending',
     };
+  
+    console.log('Booking Details:', bookingDetails);
   
     try {
       const token = await AsyncStorage.getItem('@authToken');
@@ -106,6 +101,8 @@ const BookingPage = ({ route, navigation }) => {
         Alert.alert('Error', 'You are not logged in');
         return;
       }
+  
+      console.log('Token:', token);
   
       const response = await fetch(API_URL, {
         method: 'POST',
@@ -115,33 +112,43 @@ const BookingPage = ({ route, navigation }) => {
         },
         body: JSON.stringify(bookingDetails),
       });
-      console.log("User ID from Middleware:", userId);
-
   
-      const responseData = await response.json();
-      console.log('Response Data:', responseData);
-      if (!response.ok) {
-        throw new Error(responseData.message || 'Failed to create reservation');
-      }
+      const result = await response.json();
   
-      // Initiate Payment
-      const paymentResponse = await fetch(PAY_API_URL, {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-          Authorization: `Bearer ${token}`,
-        },
-        body: JSON.stringify({
-          reservationId: responseData.reservation._id,
-          amount: responseData.reservation.amount,
-        }),
-      });
+      if (response.ok) {
+        if (result.token && typeof result.token === 'string') {
+          await AsyncStorage.setItem('@authToken', result.token);
+        } else {
+          console.warn('No valid token received from the server');
+        }
   
-      const paymentData = await paymentResponse.json();
-      if (paymentData.approvalUrl) {
-        navigation.navigate('Payment', { approvalUrl: paymentData.approvalUrl });
+        Alert.alert('Success', 'Booking successful');
+  
+        console.log('Response Status:', response.status);
+        console.log('Response Data:', result);
+  
+        const paymentResponse = await fetch(PAY_API_URL, {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+            Authorization: `Bearer ${token}`,
+          },
+          body: JSON.stringify({
+            reservationId: result.reservation._id,
+            amount: result.reservation.amount,
+          }),
+        });
+  
+        const paymentData = await paymentResponse.json();
+        console.log('Payment Data:', paymentData);
+  
+        if (paymentData.approvalUrl) {
+          navigation.navigate('Payment', { approvalUrl: paymentData.approvalUrl });
+        } else {
+          Alert.alert('Error', 'Payment initiation failed');
+        }
       } else {
-        Alert.alert('Error', 'Payment initiation failed');
+        throw new Error(result.message || 'Failed to create reservation');
       }
     } catch (error) {
       console.error('Error:', error);
@@ -150,8 +157,6 @@ const BookingPage = ({ route, navigation }) => {
       setLoading(false);
     }
   };
-  
-  
   useEffect(() => {
     if (restaurant) {
       filterSlotsByDate(date);
@@ -173,17 +178,17 @@ const BookingPage = ({ route, navigation }) => {
       <TextInput
         style={styles.input}
         placeholder="Enter your name"
-        value={contactName}
-        onChangeText={setContactName}
+        value={fullname}
+        onChangeText={setFullName}
       />
 
       <Text style={styles.label}>Contact Phone</Text>
       <TextInput
         style={styles.input}
         placeholder="Enter your phone number"
-        value={contactPhone}
+        value={phonenumber}
         keyboardType="phone-pad"
-        onChangeText={setContactPhone}
+        onChangeText={setPhoneNumber}
       />
 
       <Text style={styles.label}>Number of Guests</Text>
@@ -226,7 +231,7 @@ const BookingPage = ({ route, navigation }) => {
 
       <Text style={styles.label}>Total Amount: ${totalAmount.toFixed(2)}</Text>
 
-      <TouchableOpacity style={styles.button} onPress={handleBooking} disabled={loading}>
+      <TouchableOpacity style={styles.button} onPress={Booking} disabled={loading}>
         <Text style={styles.buttonText}>{loading ? 'Booking...' : 'Confirm Booking'}</Text>
       </TouchableOpacity>
     </View>

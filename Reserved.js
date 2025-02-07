@@ -9,33 +9,56 @@ import {
   Alert,
 } from 'react-native';
 import { LinearGradient } from 'expo-linear-gradient';
+import AsyncStorage from '@react-native-async-storage/async-storage';
+import moment from 'moment';
 
-const API_URL = 'https://resturantappbackend.onrender.com/reservations'; 
+const API_URI = 'https://resturantappbackend.onrender.com/reservations';
 
 export default function Reserved() {
   const [reservations, setReservations] = useState([]);
+  const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    // Fetch reservations from the API
     const fetchReservations = async () => {
       try {
-        const response = await fetch(API_URL, {
+        const token = await AsyncStorage.getItem('@authToken');
+        
+        if (!token) {
+          Alert.alert('Error', 'You are not logged in');
+          return;
+        }
+
+        console.log('Stored Token:', token); // Debugging
+
+        const response = await fetch(API_URI, {
           method: 'GET',
           headers: {
             'Authorization': `Bearer ${token}`,
-            'Content-Type': 'application/json', 
+            'Content-Type': 'application/json',
           },
         });
-        const data = await response.json();
-        setReservations(data);  
+
+        if (response.ok) {
+          const data = await response.json();
+          console.log('Fetched Reservations:', data); // Debugging
+
+          if (Array.isArray(data)) {
+            setReservations(data);
+          } else {
+            console.error('Invalid API response: Expected an array', data);
+          }
+        } else {
+          console.error('Error fetching reservations:', response.status);
+        }
       } catch (error) {
         console.error('Error fetching reservations:', error);
+      } finally {
+        setLoading(false);
       }
     };
-  
+
     fetchReservations();
   }, []);
-  
 
   const cancelReservation = async (id) => {
     Alert.alert(
@@ -47,9 +70,14 @@ export default function Reserved() {
           text: 'Yes',
           onPress: async () => {
             try {
-              const response = await fetch(`${API_URL}/${id}`, {
+              const token = await AsyncStorage.getItem('@authToken');
+              const response = await fetch(`${API_URI}/${id}`, {
                 method: 'DELETE',
+                headers: {
+                  'Authorization': `Bearer ${token}`,
+                },
               });
+
               if (response.ok) {
                 setReservations((prev) => prev.filter((res) => res.id !== id));
                 Alert.alert('Success', 'Reservation canceled successfully.');
@@ -66,41 +94,50 @@ export default function Reserved() {
     );
   };
 
+ 
+
   const renderReservation = ({ item }) => (
-    <View>
-      <View style={styles.card}>
-        {/* <Image  source={ {uri: item.imageUrl } } style={styles.image} /> */}
-        <View style={styles.cardContent}>
-          <Text style={styles.restaurantName}>{item.restaurantName}</Text>
-          <Text style={styles.details}>⏰ {item.time}</Text>
-          <Text style={styles.details}>📅 {item.date}</Text>
-          <TouchableOpacity
-            style={styles.cancelButton}
-            onPress={() => cancelReservation(item.id)}
-          >
-            <Text style={styles.cancelButtonText}>Cancel Reservation</Text>
-          </TouchableOpacity>
-        </View>
+    <View style={styles.card}>
+      <View style={styles.cardContent}>
+        <Text style={styles.restaurantName}>{item.restaurantName || 'Unknown Restaurant'}</Text>
+        <Text style={styles.details1}>
+          ⏰ {item.startTime && item.endTime ? `${moment(item.startTime).format('LT')} to ${moment(item.endTime).format('LT')}` : 'No time available'}
+        </Text>
+        <Text style={styles.details1}>
+          📅 {item.startTime && item.endTime ? `${moment(item.startTime).format('DD-MM-YYYY')} to ${moment(item.endTime).format('DD-MM-YYYY')}`: 'No date available'}
+          </Text>
+          <Text style={styles.details1}>Status: {item.status || 'Unknown Status'}</Text>
+          <Text style={styles.details1} >Guests: {item.numberOfGuests || 'Unknown Guests'}</Text>
+          <Text style={styles.details1} >Price:{item.amount || 'Unknown Amount'}</Text>
+          <Text style={styles.details1} >Booked for: {item.email || 'Unknown Name'}</Text>
+          <Text style={styles.details1} ></Text>
+        <TouchableOpacity
+          style={styles.cancelButton}
+          onPress={() => cancelReservation(item.id)}
+        >
+          <Text style={styles.cancelButtonText}>Cancel Reservation</Text>
+        </TouchableOpacity>
       </View>
     </View>
   );
-
+  
   return (
     <LinearGradient colors={['#1a1a1a', '#000000']} style={styles.gradient}>
       <View style={styles.container}>
-        <View>
-          <Image
-            source={require('./assets/Feast-Finder-removebg-preview.png')}
-            style={styles.logo}
-            resizeMode="contain"
-          />
-        </View>
+        <Image
+          source={require('./assets/Feast-Finder-removebg-preview.png')}
+          style={styles.logo}
+          resizeMode="contain"
+        />
         <Text style={styles.title}>Your Reservations</Text>
-        {reservations.length > 0 ? (
+
+        {loading ? (
+          <Text style={styles.loadingText}>Loading reservations...</Text>
+        ) : reservations.length > 0 ? (
           <FlatList
             data={reservations}
             renderItem={renderReservation}
-            keyExtractor={(item) => item.id.toString()}
+            keyExtractor={(item, index) => (item?.id ? item.id.toString() : `fallback-${index}`)}
             contentContainerStyle={styles.listContainer}
           />
         ) : (
@@ -143,12 +180,6 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     alignItems: 'center',
   },
-  image: {
-    width: 80,
-    height: 80,
-    borderRadius: 10,
-    marginRight: 15,
-  },
   cardContent: {
     flex: 1,
   },
@@ -158,9 +189,9 @@ const styles = StyleSheet.create({
     color: '#fff',
     marginBottom: 5,
   },
-  details: {
+  details1: {
     fontSize: 14,
-    color: '#ccc',
+    color: 'white',
     marginBottom: 5,
   },
   cancelButton: {
@@ -177,6 +208,12 @@ const styles = StyleSheet.create({
   noReservations: {
     fontSize: 16,
     color: '#ccc',
+    textAlign: 'center',
+    marginTop: 50,
+  },
+  loadingText: {
+    fontSize: 16,
+    color: '#fff',
     textAlign: 'center',
     marginTop: 50,
   },
