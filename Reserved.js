@@ -28,7 +28,7 @@ export default function Reserved() {
           return;
         }
 
-        console.log('Stored Token:', token); // Debugging
+        console.log('Stored Token:', token); 
 
         const response = await fetch(API_URI, {
           method: 'GET',
@@ -40,7 +40,7 @@ export default function Reserved() {
 
         if (response.ok) {
           const data = await response.json();
-          console.log('Fetched Reservations:', data); // Debugging
+          console.log('Fetched Reservations:', data); 
 
           if (Array.isArray(data)) {
             setReservations(data);

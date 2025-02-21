@@ -41,7 +41,7 @@ export default function AppNavigator() {
         <Tab.Screen name="Profile" component={ProfileScreen} />
         <Tab.Screen name="Reserved" component={Reserved} />
         <Tab.Screen name="Booking" component={BookingScreen} />
-        {/* <Tab.Screen name="Review" component={ReviewScreen} /> */}
+        <Tab.Screen name="Review" component={ReviewScreen} />
         
 
       </Tab.Navigator>

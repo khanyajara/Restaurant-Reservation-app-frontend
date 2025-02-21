@@ -9,6 +9,7 @@ import Icons from 'react-native-vector-icons/FontAwesome';
 
 const AdminPage = () => {
   const [restaurants, setRestaurants] = useState([]);
+  const [reservations,setReservations] = useState([])
   const [users, setUsers] = useState([]);
   const [newRestaurant, setNewRestaurant] = useState({
     name: '',
@@ -29,6 +30,7 @@ const AdminPage = () => {
   useEffect(() => {
     fetchRestaurants();
     fetchAllUser();
+    fetchUserReservtion();
   }, []);
 
   const fetchRestaurants = async () => {
@@ -40,6 +42,18 @@ const AdminPage = () => {
       Alert.alert('Error', 'Failed to fetch restaurants');
     }
   };
+
+  const fetchUserReservtion = async() => {
+    try{
+      const results = await axios.get('https://resturantappbackend.onrender.com/reservations')
+      setReservations(results.data.reservations);
+      console.log(results.data.reservations)
+      }catch(error){
+        console.error(error);
+        Alert.alert('Error', 'Failed to fetch reservations');
+    }
+  }
+  
 
   const fetchAllUser = async () => {
   try {
@@ -53,11 +67,9 @@ const AdminPage = () => {
       headers: { Authorization: `Bearer ${token}` },
     });
 
-    // Log the full response to check its structure
     console.log('Fetched response:', response);
 
-    // Directly access the array of users from response.data
-    if (Array.isArray(response.data)) {
+  if (Array.isArray(response.data)) {
       setUsers(response.data);
     } else {
       Alert.alert('Error', 'Invalid response structure for users');
@@ -145,6 +157,7 @@ const handleUpdateRestaurant = async (id, updatedData) => {
       Alert.alert('Error', 'Failed to delete user');
     }
   };
+
   
   
 
